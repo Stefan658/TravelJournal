@@ -1,0 +1,23 @@
+﻿@model TravelJournal.Web.ViewModels.Entries.CreateEntryViewModel
+
+<h2>Edit Entry</h2>
+<hr />
+
+@using (Html.BeginForm())
+{
+    @Html.HiddenFor(m => m.EntryId)
+    @Html.HiddenFor(m => m.JournalId)
+    @Html.HiddenFor(m => m.UserId)
+
+    <div class="form-group">
+        <label>Title</label>
+        @Html.TextBoxFor(m => m.Title, new { @class = "form-control" })
+    </div>
+
+    <div class="form-group">
+        <label>Content</label>
+        @Html.TextAreaFor(m => m.Content, new { @class = "form-control", rows = 5 })
+    </div>
+
+    <button type="submit" class="btn btn-warning">Update</button>
+}

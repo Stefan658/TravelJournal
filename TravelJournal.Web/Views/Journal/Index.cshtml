@@ -1,0 +1,44 @@
+﻿@model IEnumerable<TravelJournal.Web.ViewModels.Journals.JournalViewModel>
+
+<h2>My Journals</h2>
+<hr />
+
+<a href="@Url.Action("Create", "Journal", new { userId = ViewBag.UserId })"
+   class="btn btn-primary mb-3">
+    + New Journal
+</a>
+
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Created</th>
+            <th>Entries</th>
+            <th style="width:180px;">Actions</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @foreach (var j in Model)
+        {
+            <tr>
+                <td>@j.Title</td>
+                <td>@j.Description</td>
+                <td>@j.CreatedAt.ToString("yyyy-MM-dd")</td>
+                <td>@j.EntryCount</td>
+
+                <td>
+                    <a href="@Url.Action("Edit", "Journal", new { id = j.JournalId })"
+                       class="btn btn-warning btn-sm">Edit</a>
+
+                    <a href="@Url.Action("Delete", "Journal", new { id = j.JournalId })"
+                       class="btn btn-danger btn-sm">Delete</a>
+
+                    <a href="@Url.Action("Index", "Entry", new { journalId = j.JournalId })"
+                       class="btn btn-info btn-sm">Entries</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

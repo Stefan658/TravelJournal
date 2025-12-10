@@ -1,0 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using TravelJournal.Domain.Entities;
+
+namespace TravelJournal.Data.Accessors
+{
+    public interface IMediaAccessor
+    {
+        IEnumerable<Media> GetByEntry(int entryId);
+        void Add(Media media);
+        void Delete(int id);
+    }
+}
+

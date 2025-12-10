@@ -1,0 +1,18 @@
+﻿@model TravelJournal.Web.ViewModels.Entries.EntryViewModel
+
+<h2>Entry Details</h2>
+<hr />
+
+<div class="card p-3">
+    <h4>@Model.Title</h4>
+    <p>@Model.Content</p>
+
+    <small class="text-muted">
+        Created: @Model.CreatedAt
+    </small>
+</div>
+
+<br />
+
+<a href="@Url.Action("Index", "Entry", new { journalId = Model.JournalId })"
+   class="btn btn-secondary">Back</a>

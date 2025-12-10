@@ -1,0 +1,6 @@
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Domain\bin\Debug\TravelJournal.Domain.dll
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Domain\bin\Debug\TravelJournal.Domain.pdb
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Domain\obj\Debug\TravelJournal.Domain.csproj.AssemblyReference.cache
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Domain\obj\Debug\TravelJournal.Domain.csproj.CoreCompileInputs.cache
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Domain\obj\Debug\TravelJournal.Domain.dll
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Domain\obj\Debug\TravelJournal.Domain.pdb

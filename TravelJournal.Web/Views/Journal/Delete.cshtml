@@ -1,0 +1,25 @@
+﻿@model TravelJournal.Web.ViewModels.Journals.JournalViewModel
+
+<h2>Delete Journal</h2>
+<hr />
+
+<p>Are you sure you want to delete <strong>@Model.Title</strong>?</p>
+
+<dl class="dl-horizontal">
+    <dt>Title</dt>
+    <dd>@Model.Title</dd>
+
+    <dt>Description</dt>
+    <dd>@Model.Description</dd>
+
+    <dt>Created</dt>
+    <dd>@Model.CreatedAt.ToString("yyyy-MM-dd")</dd>
+</dl>
+
+@using (Html.BeginForm("DeleteConfirmed", "Journal", new { id = Model.JournalId }, FormMethod.Post))
+{
+    <button type="submit" class="btn btn-danger">Delete</button>
+
+    <a href="@Url.Action("Index", "Journal", new { userId = Model.UserId })"
+       class="btn btn-secondary">Cancel</a>
+}

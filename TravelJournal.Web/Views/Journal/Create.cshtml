@@ -1,0 +1,29 @@
+﻿@model TravelJournal.Web.ViewModels.Journals.CreateJournalViewModel
+
+<h2>Create Journal</h2>
+<hr />
+
+@using (Html.BeginForm("Create", "Journal", FormMethod.Post))
+{
+    @Html.HiddenFor(m => m.UserId)
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.Title)
+        @Html.TextBoxFor(m => m.Title, new { @class = "form-control" })
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.Description)
+        @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = 4 })
+    </div>
+
+    <div class="form-group">
+        <label>Make Public?</label><br />
+        @Html.CheckBoxFor(m => m.IsPublic)
+    </div>
+
+    <button type="submit" class="btn btn-success">Create</button>
+    <a href="@Url.Action("Index", "Journal", new { userId = Model.UserId })" class="btn btn-secondary">
+        Back
+    </a>
+}

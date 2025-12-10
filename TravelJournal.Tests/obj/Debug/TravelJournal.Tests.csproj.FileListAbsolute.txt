@@ -1,0 +1,15 @@
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTest.TestAdapter.dll
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.Interface.dll
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.MSTestAdapter.PlatformServices.dll
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\bin\Debug\Microsoft.TestPlatform.AdapterUtilities.dll
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\bin\Debug\TravelJournal.Tests.dll
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\bin\Debug\TravelJournal.Tests.pdb
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.dll
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.dll
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.xml
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\bin\Debug\Microsoft.VisualStudio.TestPlatform.TestFramework.Extensions.xml
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\obj\Debug\TravelJournal.Tests.csproj.AssemblyReference.cache
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\obj\Debug\TravelJournal.Tests.csproj.CoreCompileInputs.cache
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\obj\Debug\TravelJournal.Tests.csproj.CopyComplete
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\obj\Debug\TravelJournal.Tests.dll
+C:\DATE\Facultate\Master\3 PPAW\Lab_Aplicatia practica\TravelJournal\TravelJournal.Tests\obj\Debug\TravelJournal.Tests.pdb

@@ -1,0 +1,23 @@
+﻿@model TravelJournal.Web.ViewModels.Journals.JournalViewModel
+
+<h2>Journal Details</h2>
+<hr />
+
+<div class="card p-4">
+    <h3>@Model.Title</h3>
+    <p>@Model.Description</p>
+
+    <p>
+        <strong>Created:</strong> @Model.CreatedAt.ToString("yyyy-MM-dd") <br />
+        <strong>Is Public:</strong> @(Model.IsPublic ? "Yes" : "No") <br />
+        <strong>Entries:</strong> @Model.EntryCount
+    </p>
+</div>
+
+<br />
+
+<a href="@Url.Action("Index", "Journal", new { userId = Model.UserId })"
+   class="btn btn-secondary">Back to List</a>
+
+<a href="@Url.Action("Index", "Entry", new { journalId = Model.JournalId })"
+   class="btn btn-primary">View Entries</a>

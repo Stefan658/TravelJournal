@@ -7,6 +7,7 @@ using System.Web.Optimization;
 using System.Web.Routing;
 using System.Web.Http;
 using TravelJournal.Web.Infrastructure.Autofac;
+using NLog;
 
 namespace TravelJournal.Web
 {
@@ -14,6 +15,7 @@ namespace TravelJournal.Web
     {
         protected void Application_Start()
         {
+            NLog.LogManager.Setup().LoadConfigurationFromFile("NLog.config");
             AutofacConfig.RegisterDependencies();
             AreaRegistration.RegisterAllAreas();
             GlobalConfiguration.Configure(WebApiConfig.Register);

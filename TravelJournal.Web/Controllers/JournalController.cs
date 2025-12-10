@@ -5,12 +5,16 @@ using System.Web.Mvc;
 using TravelJournal.Services.Interfaces;
 using TravelJournal.Domain.Entities;
 using TravelJournal.Web.ViewModels.Journals;
+using NLog;
+
 
 namespace TravelJournal.Web.Controllers
 {
     public class JournalController : Controller
     {
         private readonly IJournalService _journalService;
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+
 
         public JournalController(IJournalService journalService)
         {
@@ -20,21 +24,34 @@ namespace TravelJournal.Web.Controllers
         // GET: /Journal?userId=5
         public ActionResult Index(int userId)
         {
-            var journals = _journalService.GetByUser(userId);
+            logger.Info("Accessing Journals/Index");
 
-            var model = journals.Select(j => new JournalViewModel
+            try
             {
-                JournalId = j.JournalId,
-                Title = j.Title,
-                Description = j.Description,
-                IsPublic = j.IsPublic,
-                CreatedAt = j.CreatedAt,
-                EntryCount = j.Entries != null ? j.Entries.Count : 0
-            }).ToList();
+                var journals = _journalService.GetByUser(userId);
 
-            ViewBag.UserId = userId;
-            return View(model);
+                var model = journals.Select(j => new JournalViewModel
+                {
+                    JournalId = j.JournalId,
+                    Title = j.Title,
+                    Description = j.Description,
+                    IsPublic = j.IsPublic,
+                    CreatedAt = j.CreatedAt,
+                    EntryCount = j.Entries != null ? j.Entries.Count : 0
+                }).ToList();
+
+                logger.Info($"Loaded {journals.Count()} journals from database");
+
+                ViewBag.UserId = userId;
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Error while loading journals list");
+                return View("Error");
+            }
         }
+
 
         // GET: /Journal/Create?userId=5
         public ActionResult Create(int userId)
@@ -140,6 +157,7 @@ namespace TravelJournal.Web.Controllers
             var journal = _journalService.GetById(id);
             if (journal == null)
                 return HttpNotFound();
+
 
             var userId = journal.UserId;
 

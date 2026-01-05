@@ -22,9 +22,13 @@
             <td>@e.CreatedAt.ToString("g")</td>
             <td>
                 <a href="@Url.Action("Details", "Entry", new { id = e.EntryId })"
-                   class="btn btn-info btn-sm">Details</a>
+                   class="btn btn-info btn-sm">
+                    Details
+                </a>
 
-                <a href="@Url.Action("Edit", "Entry", new { id = e.EntryId })"
+
+                <a href="@Url.Action("Edit", "Entry", new { id = e.EntryId, journalId = ViewBag.JournalId })
+"
                    class="btn btn-warning btn-sm">Edit</a>
 
                 <a href="@Url.Action("Delete", "Entry", new { id = e.EntryId })"

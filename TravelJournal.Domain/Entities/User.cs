@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace TravelJournal.Domain.Entities
 {
+    [Serializable]
     public class User
     {
         public int UserId { get; set; }

@@ -1,0 +1,57 @@
+﻿@model TravelJournal.Web.ViewModels.Home.DashboardViewModel
+@{
+    ViewBag.Title = "Dashboard";
+}
+
+<h2>Dashboard</h2>
+
+<div style="display:flex; gap:16px; margin:16px 0;">
+    <div style="padding:16px; border:1px solid #ddd; border-radius:8px; width:180px;">
+        <div style="color:#777;">Journals</div>
+        <div style="font-size:28px; font-weight:bold;">@Model.JournalsCount</div>
+    </div>
+
+    <div style="padding:16px; border:1px solid #ddd; border-radius:8px; width:180px;">
+        <div style="color:#777;">Entries</div>
+        <div style="font-size:28px; font-weight:bold;">@Model.EntriesCount</div>
+    </div>
+</div>
+
+<hr />
+
+<h3>Recent entries</h3>
+@if (!Model.RecentEntries.Any())
+{
+    <p style="color:#777;">No entries yet.</p>
+}
+else
+{
+    <ul>
+        @foreach (var e in Model.RecentEntries)
+        {
+            <li>
+                <strong>@e.Title</strong>
+                <span style="color:#777;">(@e.CreatedAt:yyyy-MM-dd)</span>
+                —
+                <a href="@Url.Action("Details", "Entry", new { id = e.EntryId })">Details</a>
+            </li>
+        }
+    </ul>
+}
+
+<hr />
+
+<h3>Top locations</h3>
+@if (!Model.TopLocations.Any())
+{
+    <p style="color:#777;">No locations recorded.</p>
+}
+else
+{
+    <ol>
+        @foreach (var l in Model.TopLocations)
+        {
+            <li>@l.Location — <strong>@l.Count</strong></li>
+        }
+    </ol>
+}

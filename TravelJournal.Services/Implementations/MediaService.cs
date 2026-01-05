@@ -1,12 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 using TravelJournal.Data.Accessors;
 using TravelJournal.Domain.Entities;
 using TravelJournal.Services.Interfaces;
+using NLog;
 
 namespace TravelJournal.Services.Implementations
 {
@@ -15,6 +13,7 @@ namespace TravelJournal.Services.Implementations
         private readonly IMediaAccessor _mediaAccessor;
         private readonly IUserAccessor _userAccessor;
         private readonly ISubscriptionService _subs;
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         public MediaService(IMediaAccessor mediaAccessor, IUserAccessor userAccessor, ISubscriptionService subs)
         {
@@ -24,18 +23,60 @@ namespace TravelJournal.Services.Implementations
         }
 
         public IEnumerable<Media> GetByEntry(int entryId)
-            => _mediaAccessor.GetByEntry(entryId);
+        {
+            logger.Info($"[MediaService] Retrieving media for EntryId={entryId}");
+
+            try
+            {
+                var media = _mediaAccessor.GetByEntry(entryId).ToList();
+                logger.Info($"[MediaService] Retrieved {media.Count} media files for EntryId={entryId}");
+                return media;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"[MediaService] Error retrieving media for EntryId={entryId}");
+                throw;
+            }
+        }
 
         public void Upload(Media media, int userId)
         {
-            var user = _userAccessor.GetById(userId);
+            logger.Info($"[MediaService] Attempting to upload media for UserId={userId}, EntryId={media.EntryId}");
 
-            if (!_subs.CanUploadMedia(user.SubscriptionId))
-                throw new Exception("Your subscription does not allow uploading images.");
+            try
+            {
+                var user = _userAccessor.GetById(userId);
 
-            _mediaAccessor.Add(media);
+                if (!_subs.CanUploadMedia(user.SubscriptionId))
+                {
+                    logger.Warn($"[MediaService] UserId={userId} is not allowed to upload media");
+                    throw new Exception("Your subscription does not allow uploading images.");
+                }
+
+                _mediaAccessor.Add(media);
+                logger.Info($"[MediaService] Media uploaded successfully (MediaId={media.MediaId})");
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "[MediaService] Error uploading media");
+                throw;
+            }
         }
 
-        public void Delete(int id) => _mediaAccessor.Delete(id);
+        public void Delete(int id)
+        {
+            logger.Info($"[MediaService] Deleting MediaId={id}");
+
+            try
+            {
+                _mediaAccessor.Delete(id);
+                logger.Info($"[MediaService] MediaId={id} deleted successfully");
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"[MediaService] Error deleting MediaId={id}");
+                throw;
+            }
+        }
     }
 }

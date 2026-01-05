@@ -9,11 +9,15 @@ namespace TravelJournal.Data.Accessors
 {
     public interface IEntryAccessor
     {
-        IEnumerable<Entry> GetAllByJournal(int journalId);
+        IEnumerable<Entry> GetAllByJournal(int journalId);                 // doar active (!IsDeleted)
+        IEnumerable<Entry> GetAllByJournalIncludingDeleted(int journalId); // include IsDeleted
         Entry GetById(int id);
         void Add(Entry entry);
         void Update(Entry entry);
-        void Delete(int id);
+
+        void SoftDelete(int id);
+        void Restore(int id);
     }
 }
+
 

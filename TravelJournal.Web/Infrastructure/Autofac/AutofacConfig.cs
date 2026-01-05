@@ -44,12 +44,16 @@ namespace TravelJournal.Web.Infrastructure.Autofac
             builder.RegisterApiControllers(typeof(MvcApplication).Assembly);
 
 
-
             // === SERVICES ===
             builder.RegisterAssemblyTypes(typeof(JournalService).Assembly)
                    .Where(t => t.Name.EndsWith("Service"))
                    .AsImplementedInterfaces()
                    .InstancePerRequest();
+
+            // === CACHE ===
+            builder.RegisterType<MemoryCacheService>()
+                   .As<ICache>()
+                   .SingleInstance();
 
 
             // Optional: Entry accessor/service explicit (deși deja prin assembly scanning se prind)

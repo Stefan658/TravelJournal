@@ -28,7 +28,28 @@ namespace TravelJournal.Data.Migrations
                 IsActive = true
             };
 
-            context.Subscriptions.AddOrUpdate(s => s.Name, freePlan);
+            var explorerPlan = new Subscription
+            {
+                Name = "Explorer",
+                Description = "Pentru utilizatori activi, cu export PDF.",
+                Price = 9.99m,
+                StorageLimitMB = 1000,
+                EntryLimit = 50,
+                IsActive = true
+            };
+
+            var premiumPlan = new Subscription
+            {
+                Name = "Premium",
+                Description = "Acces complet, fără limitări.",
+                Price = 19.99m,
+                StorageLimitMB = 5000,
+                EntryLimit = int.MaxValue,
+                IsActive = true
+            };
+
+
+            context.Subscriptions.AddOrUpdate(s => s.Name,freePlan ,explorerPlan, premiumPlan);
             context.SaveChanges();
 
             // Reîncarcă pentru a obține ID-ul

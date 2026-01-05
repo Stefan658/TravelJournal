@@ -1,0 +1,31 @@
+﻿@model TravelJournal.Domain.Entities.Entry
+
+@{
+    ViewBag.Title = "Create Entry";
+}
+
+<h2>Create Entry</h2>
+
+@using (Html.BeginForm())
+{
+    @Html.AntiForgeryToken()
+    @Html.HiddenFor(m => m.JournalId)
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.Title)
+        @Html.TextBoxFor(m => m.Title, new { @class = "form-control" })
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.Content)
+        @Html.TextAreaFor(m => m.Content, new { @class = "form-control" })
+    </div>
+
+    <div class="form-group">
+        @Html.LabelFor(m => m.Location)
+        @Html.TextBoxFor(m => m.Location, new { @class = "form-control" })
+    </div>
+
+    <input type="submit" value="Save" class="btn btn-success" />
+    @Html.ActionLink("Back", "Index", new { journalId = Model.JournalId })
+}

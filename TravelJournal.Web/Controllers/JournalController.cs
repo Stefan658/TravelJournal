@@ -56,6 +56,9 @@ namespace TravelJournal.Web.Controllers
         // GET: /Journal/Create?userId=5
         public ActionResult Create(int userId)
         {
+            logger.Info($"Displaying Journal Create view for UserId={userId}");
+
+
             var model = new CreateJournalViewModel
             {
                 UserId = userId,
@@ -70,30 +73,56 @@ namespace TravelJournal.Web.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create(CreateJournalViewModel model)
         {
+            logger.Info($"Attempting to create journal for UserId={model.UserId}");
+
             if (!ModelState.IsValid)
+            {
+                logger.Warn("Journal creation failed — model invalid");
                 return View(model);
 
-            var journal = new Journal
+            }
+
+            try
             {
-                UserId = model.UserId,
-                Title = model.Title,
-                Description = model.Description,
-                IsPublic = model.IsPublic,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            };
 
-            _journalService.Create(journal);
+                var journal = new Journal
+                 {
+                     UserId = model.UserId,
+                     Title = model.Title,
+                     Description = model.Description,
+                     IsPublic = model.IsPublic,
+                     CreatedAt = DateTime.Now,
+                     UpdatedAt = DateTime.Now
+                 };
 
-            return RedirectToAction("Index", new { userId = model.UserId });
+                _journalService.Create(journal);
+
+                logger.Info($"Journal created successfully with ID={journal.JournalId}");
+
+
+                return RedirectToAction("Index", new { userId = model.UserId });
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Error creating journal for UserId={model.UserId}");
+                return View("Error");
+            }
+
         }
 
         // GET: /Journal/Edit/5
         public ActionResult Edit(int id)
         {
+            logger.Info($"Accessing Journal Edit for ID={id}");
+
             var journal = _journalService.GetById(id);
             if (journal == null)
+            {
+                logger.Warn($"Journal ID={id} not found for editing");
                 return HttpNotFound();
+            }
+
+
 
             var model = new CreateJournalViewModel
             {
@@ -107,17 +136,30 @@ namespace TravelJournal.Web.Controllers
             return View(model);
         }
 
+
+
         // POST: /Journal/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Edit(CreateJournalViewModel model)
         {
-            if (!ModelState.IsValid)
-                return View(model);
+            logger.Info($"Attempting to update Journal ID={model.JournalId}");
 
-            var journal = _journalService.GetById(model.JournalId);
+            if (!ModelState.IsValid)
+            {
+                logger.Warn($"Journal update failed — invalid model for ID={model.JournalId}");
+                return View(model);
+            }
+
+
+            try
+            {
+                var journal = _journalService.GetById(model.JournalId);
             if (journal == null)
+            {
+                logger.Warn($"Journal ID={model.JournalId} not found for update");
                 return HttpNotFound();
+            }
 
             journal.Title = model.Title;
             journal.Description = model.Description;
@@ -126,15 +168,28 @@ namespace TravelJournal.Web.Controllers
 
             _journalService.Update(journal);
 
+            logger.Info($"Journal ID={model.JournalId} updated successfully");
+
             return RedirectToAction("Index", new { userId = model.UserId });
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Error updating Journal ID={model.JournalId}");
+                return View("Error");
+            }
         }
 
         // GET: /Journal/Delete/5
         public ActionResult Delete(int id)
         {
+            logger.Info($"Accessing Journal Delete confirmation for ID={id}");
+
             var journal = _journalService.GetById(id);
             if (journal == null)
+            {
+                logger.Warn($"Journal ID={id} not found for deletion");
                 return HttpNotFound();
+            }
 
             var model = new JournalViewModel
             {
@@ -154,16 +209,34 @@ namespace TravelJournal.Web.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
+            logger.Info($"Attempting to delete Journal ID={id}");
+
+
+            try { 
             var journal = _journalService.GetById(id);
+            
+
             if (journal == null)
+            {
+                logger.Warn($"Delete failed — Journal ID={id} not found");
                 return HttpNotFound();
+            }
 
 
             var userId = journal.UserId;
 
             _journalService.Delete(id);
 
+            logger.Info($"Journal ID={id} deleted successfully");
+
+
             return RedirectToAction("Index", new { userId });
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Error deleting Journal ID={id}");
+                return View("Error");
+            }
         }
     }
 }

@@ -1,0 +1,45 @@
+﻿@model IEnumerable<TravelJournal.Domain.Entities.Entry>
+@{
+    ViewBag.Title = "Deleted Entries";
+    var journalId = (int)ViewBag.JournalId;
+}
+
+<h2>Deleted Entries (JournalId=@journalId)</h2>
+
+<p>
+    <a href="@Url.Action("Index", "Entries", new { area="Admin", journalId = journalId })">Back to active entries</a>
+</p>
+
+@if (!Model.Any())
+{
+    <div>No deleted entries.</div>
+}
+else
+{
+    <table class="table">
+        <tr>
+            <th>EntryId</th>
+            <th>Title</th>
+            <th>Location</th>
+            <th>CreatedAt</th>
+            <th></th>
+        </tr>
+
+        @foreach (var e in Model)
+        {
+            <tr>
+                <td>@e.EntryId</td>
+                <td>@e.Title</td>
+                <td>@e.Location</td>
+                <td>@e.CreatedAt</td>
+                <td>
+                    @using (Html.BeginForm("Restore", "Entries", new { area = "Admin", id = e.EntryId, journalId = journalId }, FormMethod.Post))
+                    {
+                        @Html.AntiForgeryToken()
+                        <button class="btn btn-sm btn-success" type="submit">Restore</button>
+                    }
+                </td>
+            </tr>
+        }
+    </table>
+}

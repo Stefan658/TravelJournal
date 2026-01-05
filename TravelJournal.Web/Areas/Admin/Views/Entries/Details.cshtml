@@ -1,0 +1,22 @@
+﻿@model TravelJournal.Domain.Entities.Entry
+
+<h2>Entry Details</h2>
+
+<dl class="dl-horizontal">
+    <dt>Title</dt>
+    <dd>@Model.Title</dd>
+
+    <dt>Content</dt>
+    <dd>@Model.Content</dd>
+
+    <dt>Location</dt>
+    <dd>@Model.Location</dd>
+
+    <dt>CreatedAt</dt>
+    <dd>@Model.CreatedAt</dd>
+</dl>
+
+<p>
+    @Html.ActionLink("Edit", "Edit", new { id = Model.EntryId }) |
+    @Html.ActionLink("Back", "Index", new { journalId = Model.JournalId })
+</p>

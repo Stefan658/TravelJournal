@@ -5,6 +5,8 @@
 
 @using (Html.BeginForm())
 {
+    @Html.AntiForgeryToken() 
+
     @Html.HiddenFor(m => m.JournalId)
     @Html.HiddenFor(m => m.UserId)
 

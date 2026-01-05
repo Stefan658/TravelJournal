@@ -1,0 +1,40 @@
+﻿@model IEnumerable<TravelJournal.Web.ViewModels.Journals.JournalViewModel>
+
+    @{
+        ViewBag.Title = "Admin - Journals";
+    }
+
+    <h2>Admin - Journals</h2>
+
+    <p>
+        @Html.ActionLink("Create New Journal", "Create", null, new { @class = "btn btn-primary" })
+    </p>
+
+    <table class="table">
+        <tr>
+            <th>JournalId</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>IsPublic</th>
+            <th>CreatedAt</th>
+            <th>EntryCount</th>
+            <th>Actions</th>
+        </tr>
+
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.JournalId</td>
+                <td>@item.Title</td>
+                <td>@item.Description</td>
+                <td>@item.IsPublic</td>
+                <td>@item.CreatedAt</td>
+                <td>@item.EntryCount</td>
+                <td>
+                    @Html.ActionLink("Details", "Details", new { id = item.JournalId }) |
+                    @Html.ActionLink("Edit", "Edit", new { id = item.JournalId }) |
+                    @Html.ActionLink("Delete", "Delete", new { id = item.JournalId })
+                </td>
+            </tr>
+        }
+    </table>

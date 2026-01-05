@@ -1,0 +1,38 @@
+﻿@model TravelJournal.Web.ViewModels.Journals.JournalViewModel
+
+@{
+    ViewBag.Title = "Delete Journal";
+}
+
+<h2>Delete Journal</h2>
+
+<h3>Are you sure you want to delete this?</h3>
+
+<div>
+    <dl class="dl-horizontal">
+        <dt>JournalId</dt>
+        <dd>@Model.JournalId</dd>
+
+        <dt>Title</dt>
+        <dd>@Model.Title</dd>
+
+        <dt>Description</dt>
+        <dd>@Model.Description</dd>
+
+        <dt>IsPublic</dt>
+        <dd>@Model.IsPublic</dd>
+
+        <dt>CreatedAt</dt>
+        <dd>@Model.CreatedAt</dd>
+
+        <dt>EntryCount</dt>
+        <dd>@Model.EntryCount</dd>
+    </dl>
+</div>
+
+@using (Html.BeginForm("Delete", "Journals", new { area = "Admin", id = Model.JournalId }, FormMethod.Post))
+{
+    @Html.AntiForgeryToken()
+    <input type="submit" value="Delete" class="btn btn-danger" />
+    @Html.ActionLink("Back to List", "Index", null, new { @class = "btn btn-default" })
+}

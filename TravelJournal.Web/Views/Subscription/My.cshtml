@@ -1,0 +1,47 @@
+﻿@model TravelJournal.Web.ViewModels.Subscriptions.MySubscriptionViewModel
+
+@{
+    ViewBag.Title = "My Subscription";
+}
+
+<h2>My Subscription</h2>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<div class="panel panel-default">
+    <div class="panel-heading">
+        <strong>User:</strong> @Model.Username
+    </div>
+    <div class="panel-body">
+        <p><strong>Current plan:</strong> @Model.CurrentPlanName (@Model.CurrentPlanPrice)</p>
+
+        <ul>
+            <li>Media upload: @(Model.CanUploadMedia ? "Allowed" : "Blocked (Upgrade)")</li>
+            <li>PDF export: @(Model.CanExportPdf ? "Allowed" : "Blocked (Upgrade)")</li>
+            <li>Map: @(Model.CanUseMap ? "Allowed" : "Blocked (Upgrade)")</li>
+        </ul>
+
+        <a class="btn btn-default" href="@Url.Action("Plans", "Subscription", new { userId = Model.UserId })">
+            View Plans / Change
+        </a>
+
+        @if (Model.CanExportPdf)
+        {
+            <a class="btn btn-primary" href="@Url.Action("JournalPdf", "Export", new { journalId = 1 })">
+                Export PDF (Journal 1)
+            </a>
+        }
+        else
+        {
+            <button class="btn btn-secondary" disabled>
+                Export PDF (Upgrade required)
+            </button>
+            <div class="text-muted mt-1">PDF export is available only on Premium.</div>
+        }
+
+
+    </div>
+</div>

@@ -1,0 +1,37 @@
+﻿@model TravelJournal.Web.ViewModels.Journals.JournalViewModel
+
+@{
+    ViewBag.Title = "Journal Details";
+}
+
+<h2>Journal Details</h2>
+
+<div>
+    <dl class="dl-horizontal">
+        <dt>JournalId</dt>
+        <dd>@Model.JournalId</dd>
+
+        <dt>UserId</dt>
+        <dd>@Model.UserId</dd>
+
+        <dt>Title</dt>
+        <dd>@Model.Title</dd>
+
+        <dt>Description</dt>
+        <dd>@Model.Description</dd>
+
+        <dt>IsPublic</dt>
+        <dd>@Model.IsPublic</dd>
+
+        <dt>CreatedAt</dt>
+        <dd>@Model.CreatedAt</dd>
+
+        <dt>EntryCount</dt>
+        <dd>@Model.EntryCount</dd>
+    </dl>
+</div>
+
+<p>
+    @Html.ActionLink("Edit", "Edit", new { id = Model.JournalId }, new { @class = "btn btn-warning" })
+    @Html.ActionLink("Back to List", "Index", null, new { @class = "btn btn-default" })
+</p>

@@ -1,0 +1,43 @@
+﻿@model IEnumerable<TravelJournal.Domain.Entities.Entry>
+
+@{
+    ViewBag.Title = "Admin – Entries";
+}
+
+<h2>Admin – Entries</h2>
+
+<a class="btn btn-link" href="@Url.Action("Deleted", "Entries", new { area="Admin", journalId = ViewBag.JournalId })">
+    View Deleted (Trash)
+</a>
+
+
+<p>
+    @Html.ActionLink(
+        "Create New Entry",
+        "Create",
+        new { journalId = ViewBag.JournalId },
+        new { @class = "btn btn-primary" })
+</p>
+
+<table class="table">
+    <tr>
+        <th>Title</th>
+        <th>Location</th>
+        <th>CreatedAt</th>
+        <th>Actions</th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>@item.Title</td>
+            <td>@item.Location</td>
+            <td>@item.CreatedAt</td>
+            <td>
+                @Html.ActionLink("Details", "Details", new { id = item.EntryId }) |
+                @Html.ActionLink("Edit", "Edit", new { id = item.EntryId }) |
+                @Html.ActionLink("Delete", "Delete", new { id = item.EntryId })
+            </td>
+        </tr>
+    }
+</table>

@@ -1,0 +1,63 @@
+﻿@model TravelJournal.Web.ViewModels.Subscriptions.PlansViewModel
+
+@{
+    ViewBag.Title = "Subscription Plans";
+}
+
+<h2>Subscription Plans</h2>
+
+<p>
+    <a class="btn btn-default" href="@Url.Action("My", "Subscription", new { userId = Model.UserId })">My Plan</a>
+</p>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Plan</th>
+            <th>Price</th>
+            <th>Entry Limit</th>
+            <th>Storage (MB)</th>
+            <th>Media Upload</th>
+            <th>PDF Export</th>
+            <th>Map</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var p in Model.Plans)
+        {
+            bool isCurrent = (p.SubscriptionId == Model.CurrentSubscriptionId);
+
+            // matrix (hard-coded by plan name for UI demo)
+            bool canMedia = (p.Name == "Explorer" || p.Name == "Premium");
+            bool canPdf = (p.Name == "Explorer" || p.Name == "Premium"); // conform blueprint
+            bool canMap = (p.Name == "Explorer" || p.Name == "Premium");
+
+            <tr>
+                <td><strong>@p.Name</strong><br /><small>@p.Description</small></td>
+                <td>@p.Price</td>
+                <td>@(p.EntryLimit == int.MaxValue ? "Unlimited" : p.EntryLimit.ToString())</td>
+                <td>@p.StorageLimitMB</td>
+                <td>@(canMedia ? "Yes" : "No")</td>
+                <td>@(canPdf ? "Yes" : "No")</td>
+                <td>@(canMap ? "Yes" : "No")</td>
+                <td style="white-space:nowrap;">
+                    @if (isCurrent)
+                    {
+                        <span class="label label-success">Current</span>
+                    }
+                    else
+                    {
+                        using (Html.BeginForm("ChangePlan", "Subscription", FormMethod.Post))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.Hidden("userId", Model.UserId)
+                            @Html.Hidden("planId", p.SubscriptionId)
+                            <button type="submit" class="btn btn-primary">Upgrade</button>
+                        }
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

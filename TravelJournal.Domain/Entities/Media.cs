@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace TravelJournal.Domain.Entities
 {
+    [Serializable]
     public class Media
     {
         public int MediaId { get; set; }

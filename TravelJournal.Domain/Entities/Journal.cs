@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace TravelJournal.Domain.Entities
 {
+    [Serializable]
     public class Journal
     {
         public int JournalId { get; set; }

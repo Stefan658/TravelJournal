@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace TravelJournal.Domain.Entities
 {
+    [Serializable]
     public class Entry
     {
         public int EntryId { get; set; }
@@ -25,6 +26,8 @@ namespace TravelJournal.Domain.Entities
         public virtual Journal Journal { get; set; }
 
         public int UserId { get; set; }
+        public bool IsDeleted { get; set; }
+
 
 
         // Relații

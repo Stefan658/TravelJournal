@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Web;
-using System.Web.Mvc;
 using System.IO;
+using System.Linq;
+using System.Web.Mvc;
+
 using iTextSharp.text;
 using iTextSharp.text.pdf;
-using TravelJournal.Services.Interfaces;
+
 using TravelJournal.Domain.Entities;
+using TravelJournal.Services.Interfaces;
 
 namespace TravelJournal.Web.Controllers
 {
@@ -15,29 +16,49 @@ namespace TravelJournal.Web.Controllers
     {
         private readonly IEntryService _entryService;
         private readonly ISubscriptionService _subscriptionService;
+        private readonly IUserService _userService;
 
-        // temporar (până la auth)
+        // Temporar (până la auth)
         private const int DefaultUserId = 1;
 
-        public ExportController(IEntryService entryService, ISubscriptionService subscriptionService)
+        public ExportController(
+            IEntryService entryService,
+            ISubscriptionService subscriptionService,
+            IUserService userService)
         {
             _entryService = entryService;
             _subscriptionService = subscriptionService;
+            _userService = userService;
         }
 
-        // GET: /Export/JournalPdf?journalId=1
-        public ActionResult JournalPdf(int journalId)
+        // GET: /Export/JournalPdf?journalId=1&userId=1
+        [HttpGet]
+        public ActionResult JournalPdf(int journalId, int? userId)
         {
-            // ✅ GATING SERVER-SIDE (demonstrabil)
-            if (!_subscriptionService.CanExportPdf(DefaultUserId))
+            int uid = userId ?? DefaultUserId;
+
+            // 1) user valid
+            var user = _userService.GetById(uid);
+            if (user == null)
+                return HttpNotFound("User not found.");
+
+            // 2) ✅ GATING CORECT: pe SubscriptionId (nu pe userId)
+            if (!_subscriptionService.CanExportPdf(user.SubscriptionId))
             {
-                return new HttpStatusCodeResult(403, "Upgrade required: PDF export is available only on Premium plan.");
+                return new HttpStatusCodeResult(
+                    403,
+                    "Upgrade required: PDF export is available only on Premium plan."
+                );
             }
 
+            // 3) date export
             var entries = _entryService.GetByJournal(journalId)?.ToList()
-              ?? new List<Entry>();
+                          ?? new List<Entry>();
 
+            // (optional) dacă vrei să excluzi soft-deleted, în caz că GetByJournal le include:
+            // entries = entries.Where(e => !e.IsDeleted).ToList();
 
+            // 4) generare PDF
             using (var ms = new MemoryStream())
             {
                 var doc = new Document(PageSize.A4, 36, 36, 36, 36);
@@ -49,6 +70,7 @@ namespace TravelJournal.Web.Controllers
 
                 doc.Add(new Paragraph($"TravelJournal - Export (JournalId={journalId})", titleFont));
                 doc.Add(new Paragraph($"Generated at: {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC", normalFont));
+                doc.Add(new Paragraph($"UserId: {uid} | SubscriptionId: {user.SubscriptionId}", normalFont));
                 doc.Add(new Paragraph(" ", normalFont));
 
                 if (!entries.Any())
@@ -66,21 +88,10 @@ namespace TravelJournal.Web.Controllers
 
                     foreach (var e in entries)
                     {
-                        // NOTE: adaptează numele câmpurilor după modelul tău Entry
                         table.AddCell(new PdfPCell(new Phrase($"{e.EntryId}", normalFont)));
                         table.AddCell(new PdfPCell(new Phrase($"{e.CreatedAt:yyyy-MM-dd}", normalFont)));
 
-                        string text = "";
-                        try
-                        {
-                            text = $"{e.Title}\n{e.Content}";
-                        }
-                        catch
-                        {
-                            // fallback dacă nu există Title/Content
-                            text = e.ToString();
-                        }
-
+                        var text = $"{e.Title}\n{e.Content}";
                         table.AddCell(new PdfPCell(new Phrase(text ?? "", normalFont)));
                     }
 

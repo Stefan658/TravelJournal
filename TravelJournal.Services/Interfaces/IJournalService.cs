@@ -10,6 +10,8 @@ namespace TravelJournal.Services.Interfaces
     public interface IJournalService
     {
         IEnumerable<Journal> GetByUser(int userId);
+        IEnumerable<Journal> GetAll();
+
         Journal GetById(int id);
         void Create(Journal journal);
         void Update(Journal journal);

@@ -5,19 +5,31 @@
 
 <div class="card p-4">
     <h3>@Model.Title</h3>
+
     <p>@Model.Description</p>
 
     <p>
-        <strong>Created:</strong> @Model.CreatedAt.ToString("yyyy-MM-dd") <br />
-        <strong>Is Public:</strong> @(Model.IsPublic ? "Yes" : "No") <br />
-        <strong>Entries:</strong> @Model.EntryCount
+        <strong>Created:</strong>
+        @Model.CreatedAt.ToString("yyyy-MM-dd")
+        <br />
+
+        <strong>Is Public:</strong>
+        @(Model.IsPublic ? "Yes" : "No")
+        <br />
+
+        <strong>Entries:</strong>
+        @Model.EntryCount
     </p>
 </div>
 
 <br />
 
 <a href="@Url.Action("Index", "Journal", new { userId = Model.UserId })"
-   class="btn btn-secondary">Back to List</a>
+   class="btn btn-secondary">
+    Back to Journals
+</a>
 
 <a href="@Url.Action("Index", "Entry", new { journalId = Model.JournalId })"
-   class="btn btn-primary">View Entries</a>
+   class="btn btn-primary">
+    View Entries
+</a>

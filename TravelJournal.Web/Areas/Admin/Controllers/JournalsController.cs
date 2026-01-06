@@ -23,7 +23,7 @@ namespace TravelJournal.Web.Areas.Admin.Controllers
         // GET: Admin/Journals
         public ActionResult Index()
         {
-            var journals = _journalService.GetByUser(DefaultUserId)
+            var journals = _journalService.GetAll()
                 .Select(j => new JournalViewModel
                 {
                     JournalId = j.JournalId,
@@ -39,8 +39,8 @@ namespace TravelJournal.Web.Areas.Admin.Controllers
             return View(journals);
         }
 
-        // GET: Admin/Journals/Details/5
-        public ActionResult Details(int id)
+            // GET: Admin/Journals/Details/5
+            public ActionResult Details(int id)
         {
             var j = _journalService.GetById(id);
             if (j == null) return HttpNotFound();

@@ -239,5 +239,24 @@ namespace TravelJournal.Web.Controllers
                 UpdatedAt = DateTime.Now
             };
         }
+
+        // GET: /Entry/Details?id=1
+        public ActionResult Details(int id)
+        {
+            logger.Info($"Accessing Entry Details for EntryId={id}");
+
+            var entry = _entryService.GetById(id);
+            if (entry == null)
+            {
+                logger.Warn($"EntryId={id} not found during Details");
+                return HttpNotFound();
+            }
+
+            var vm = MapToViewModel(entry);
+            return View(vm);
+        }
+
+
+
     }
 }

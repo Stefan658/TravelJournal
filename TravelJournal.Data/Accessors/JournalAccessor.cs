@@ -4,6 +4,7 @@ using System.Linq;
 using TravelJournal.Data.Context;
 using TravelJournal.Domain.Entities;
 using NLog;
+using System.Data.Entity;
 
 namespace TravelJournal.Data.Accessors
 {
@@ -33,6 +34,17 @@ namespace TravelJournal.Data.Accessors
                 throw;
             }
         }
+
+        public IEnumerable<Journal> GetAll(bool includeEntries = false)
+        {
+            IQueryable<Journal> q = _db.Journals;
+
+            if (includeEntries)
+                q = q.Include(j => j.Entries);
+
+            return q.ToList();
+        }
+
 
         public Journal GetById(int id)
         {

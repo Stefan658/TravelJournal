@@ -5,12 +5,13 @@
 }
 
 <h2>Subscription Plans</h2>
+<hr />
 
 <p>
-    <a class="btn btn-default" href="@Url.Action("My", "Subscription", new { userId = Model.UserId })">My Plan</a>
+    <a class="btn btn-link" href="@Url.Action("My", "Subscription", new { userId = Model.UserId })">My Plan</a>
 </p>
 
-<table class="table table-bordered">
+<table class="table table-bordered table-striped">
     <thead>
         <tr>
             <th>Plan</th>
@@ -20,31 +21,42 @@
             <th>Media Upload</th>
             <th>PDF Export</th>
             <th>Map</th>
-            <th></th>
+            <th style="width: 140px;"></th>
         </tr>
     </thead>
-    <tbody>
-        @foreach (var p in Model.Plans)
-        {
-            bool isCurrent = (p.SubscriptionId == Model.CurrentSubscriptionId);
 
-            // matrix (hard-coded by plan name for UI demo)
-            bool canMedia = (p.Name == "Explorer" || p.Name == "Premium");
-            bool canPdf = (p.Name == "Explorer" || p.Name == "Premium"); // conform blueprint
-            bool canMap = (p.Name == "Explorer" || p.Name == "Premium");
+    <tbody>
+        @foreach (var plan in Model.Plans ?? new List<TravelJournal.Domain.Entities.Subscription>())
+        {
+            // Demo “capabilități” (inovator + ușor de demonstrat)
+            // - Free: limitat
+            // - Paid: media + pdf + map (în funcție de Price / StorageLimitMB)
+            var canUploadMedia = plan.StorageLimitMB > 200;   // Free=200 => No; rest => Yes
+            var canExportPdf = plan.Price > 0;              // Paid => Yes
+            var canUseMap = plan.Price > 0;              // Paid => Yes
 
             <tr>
-                <td><strong>@p.Name</strong><br /><small>@p.Description</small></td>
-                <td>@p.Price</td>
-                <td>@(p.EntryLimit == int.MaxValue ? "Unlimited" : p.EntryLimit.ToString())</td>
-                <td>@p.StorageLimitMB</td>
-                <td>@(canMedia ? "Yes" : "No")</td>
-                <td>@(canPdf ? "Yes" : "No")</td>
-                <td>@(canMap ? "Yes" : "No")</td>
-                <td style="white-space:nowrap;">
-                    @if (isCurrent)
+                <td>
+                    <strong>@plan.Name</strong><br />
+                    <small>@plan.Description</small>
+                </td>
+
+                <td>@plan.Price</td>
+
+                <td>
+                    @(plan.EntryLimit >= 1000000 ? "Unlimited" : plan.EntryLimit.ToString())
+                </td>
+
+                <td>@plan.StorageLimitMB</td>
+
+                <td>@(canUploadMedia ? "Yes" : "No")</td>
+                <td>@(canExportPdf ? "Yes" : "No")</td>
+                <td>@(canUseMap ? "Yes" : "No")</td>
+
+                <td>
+                    @if (plan.SubscriptionId == Model.CurrentSubscriptionId)
                     {
-                        <span class="label label-success">Current</span>
+                        <span class="badge bg-secondary">Current</span>
                     }
                     else
                     {
@@ -52,8 +64,11 @@
                         {
                             @Html.AntiForgeryToken()
                             @Html.Hidden("userId", Model.UserId)
-                            @Html.Hidden("planId", p.SubscriptionId)
-                            <button type="submit" class="btn btn-primary">Upgrade</button>
+                            @Html.Hidden("planId", plan.SubscriptionId)
+
+                            <button type="submit" class="btn btn-primary">
+                                Upgrade
+                            </button>
                         }
                     }
                 </td>

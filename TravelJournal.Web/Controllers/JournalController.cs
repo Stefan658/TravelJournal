@@ -53,6 +53,30 @@ namespace TravelJournal.Web.Controllers
         }
 
 
+        // GET: /Journal/Details?id=1
+        public ActionResult Details(int id)
+        {
+            var journal = _journalService.GetById(id);
+            if (journal == null)
+                return HttpNotFound();
+
+            var vm = new JournalViewModel
+            {
+                JournalId = journal.JournalId,
+                UserId = journal.UserId,
+                Title = journal.Title,
+                Description = journal.Description,
+                CreatedAt = journal.CreatedAt,
+                IsPublic = journal.IsPublic,
+                EntryCount = journal.Entries?.Count(e => !e.IsDeleted) ?? 0
+            };
+
+            return View(vm); // ✅ CORECT
+        }
+
+
+
+
         // GET: /Journal/Create?userId=5
         public ActionResult Create(int userId)
         {
@@ -110,6 +134,7 @@ namespace TravelJournal.Web.Controllers
 
         }
 
+        
         // GET: /Journal/Edit/5
         public ActionResult Edit(int id)
         {
@@ -179,6 +204,7 @@ namespace TravelJournal.Web.Controllers
             }
         }
 
+       
         // GET: /Journal/Delete/5
         public ActionResult Delete(int id)
         {
@@ -204,6 +230,7 @@ namespace TravelJournal.Web.Controllers
             return View(model);
         }
 
+        
         // POST: /Journal/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]

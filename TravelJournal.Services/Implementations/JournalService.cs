@@ -136,5 +136,12 @@ namespace TravelJournal.Services.Implementations
                 throw;
             }
         }
+
+
+        public IEnumerable<Journal> GetAll()
+        {
+            // IMPORTANT: ideal cu Entries incluse ca sa ai EntryCount corect in Admin
+            return _journalAccessor.GetAll(includeEntries: true);
+        }
     }
 }

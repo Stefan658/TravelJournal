@@ -4,10 +4,12 @@ using System.Web.Mvc;
 
 using TravelJournal.Domain.Entities;
 using TravelJournal.Services.Interfaces;
+using TravelJournal.Web.Infrastructure;
 using TravelJournal.Web.ViewModels.Journals;
 
 namespace TravelJournal.Web.Areas.Admin.Controllers
 {
+    [AdminAuthorize]
     public class JournalsController : Controller
     {
         private readonly IJournalService _journalService;

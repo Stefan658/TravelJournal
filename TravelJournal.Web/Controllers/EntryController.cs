@@ -14,6 +14,9 @@ namespace TravelJournal.Web.Controllers
         private readonly IJournalService _journalService;
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
+        // Temporar până la auth/seed demo (în sprintul Seed+Flow îl înlocuim cu userul autentificat)
+        private const int CurrentUserId = 1;
+
         public EntryController(IEntryService entryService, IJournalService journalService)
         {
             _entryService = entryService;
@@ -27,8 +30,17 @@ namespace TravelJournal.Web.Controllers
 
             try
             {
+                // Ownership guard: userul curent trebuie să dețină jurnalul
+                var journal = _journalService.GetByIdForUser(journalId, CurrentUserId);
+                if (journal == null)
+                {
+                    logger.Warn($"JournalId={journalId} not found or not owned by CurrentUserId={CurrentUserId}");
+                    return HttpNotFound();
+                }
+
                 var entries = _entryService.GetByJournal(journalId)
-                                           .Select(e => MapToViewModel(e))
+                                           .Where(e => !e.IsDeleted && e.UserId == CurrentUserId)
+                                           .Select(MapToViewModel)
                                            .ToList();
 
                 logger.Info($"Loaded {entries.Count} entries for JournalId={journalId}");
@@ -43,28 +55,43 @@ namespace TravelJournal.Web.Controllers
             }
         }
 
+        // GET: /Entry/Details?id=1
+        public ActionResult Details(int id)
+        {
+            logger.Info($"Accessing Entry Details for EntryId={id}");
+
+            var entry = _entryService.GetByIdForUser(id, CurrentUserId);
+            if (entry == null)
+            {
+                logger.Warn($"EntryId={id} not found or not owned by CurrentUserId={CurrentUserId} during Details");
+                return HttpNotFound();
+            }
+
+            return View(MapToViewModel(entry));
+        }
 
         // GET: /Entry/Create?journalId=5
         public ActionResult Create(int journalId)
         {
             logger.Info($"Opening Create Entry page for JournalId={journalId}");
 
-            var journal = _journalService.GetById(journalId);
+            // Ownership guard: userul curent trebuie să dețină jurnalul
+            var journal = _journalService.GetByIdForUser(journalId, CurrentUserId);
             if (journal == null)
             {
-                logger.Warn($"JournalId={journalId} not found when accessing Create Entry");
+                logger.Warn($"JournalId={journalId} not found or not owned by CurrentUserId={CurrentUserId} when accessing Create Entry");
                 return HttpNotFound();
             }
 
             var model = new CreateEntryViewModel
             {
                 JournalId = journalId,
-                UserId = journal.UserId
+                // NU ne bazăm pe UserId din form, dar îl putem popula pentru afișare (dacă view-ul îl are)
+                UserId = CurrentUserId
             };
 
             return View(model);
         }
-
 
         // POST: /Entry/Create
         [HttpPost]
@@ -81,11 +108,20 @@ namespace TravelJournal.Web.Controllers
 
             try
             {
-                var entry = MapToEntity(model);
-                _entryService.Create(entry, model.UserId);
+                // Ownership guard: userul curent trebuie să dețină jurnalul
+                var journal = _journalService.GetByIdForUser(model.JournalId, CurrentUserId);
+                if (journal == null)
+                {
+                    logger.Warn($"Create Entry blocked: JournalId={model.JournalId} not owned by CurrentUserId={CurrentUserId}");
+                    return HttpNotFound();
+                }
+
+                // Anti-tamper: userId se ia din context (CurrentUserId), nu din model
+                var entry = MapToEntityForCreate(model, CurrentUserId);
+
+                _entryService.Create(entry, CurrentUserId);
 
                 logger.Info($"Entry created successfully with ID={entry.EntryId}");
-
                 return RedirectToAction("Index", new { journalId = model.JournalId });
             }
             catch (Exception ex)
@@ -95,16 +131,15 @@ namespace TravelJournal.Web.Controllers
             }
         }
 
-
         // GET: /Entry/Edit/10
         public ActionResult Edit(int id)
         {
             logger.Info($"Accessing Entry Edit page for EntryId={id}");
 
-            var entry = _entryService.GetById(id);
+            var entry = _entryService.GetByIdForUser(id, CurrentUserId);
             if (entry == null)
             {
-                logger.Warn($"EntryId={id} not found during Edit GET");
+                logger.Warn($"EntryId={id} not found or not owned by CurrentUserId={CurrentUserId} during Edit GET");
                 return HttpNotFound();
             }
 
@@ -121,7 +156,6 @@ namespace TravelJournal.Web.Controllers
             return View(model);
         }
 
-
         // POST: /Entry/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -137,19 +171,24 @@ namespace TravelJournal.Web.Controllers
 
             try
             {
-                var existing = _entryService.GetById(model.EntryId);
+                // Ownership guard: entry trebuie să fie al userului curent
+                var existing = _entryService.GetByIdForUser(model.EntryId, CurrentUserId);
                 if (existing == null)
                 {
-                    logger.Warn($"EntryId={model.EntryId} not found for update");
+                    logger.Warn($"EntryId={model.EntryId} not found or not owned by CurrentUserId={CurrentUserId} for update");
                     return HttpNotFound();
                 }
 
-                var entry = MapToEntity(model);
-                _entryService.Update(entry);
+                // Anti-tamper: JournalId/UserId nu se iau din model, ci rămân din existing
+                existing.Title = model.Title;
+                existing.Content = model.Content;
+                existing.Location = model.Location;
+                existing.UpdatedAt = DateTime.Now;
+
+                _entryService.Update(existing);
 
                 logger.Info($"EntryId={model.EntryId} updated successfully");
-
-                return RedirectToAction("Index", new { journalId = model.JournalId });
+                return RedirectToAction("Index", new { journalId = existing.JournalId });
             }
             catch (Exception ex)
             {
@@ -158,23 +197,20 @@ namespace TravelJournal.Web.Controllers
             }
         }
 
-
         // GET: /Entry/Delete/10
         public ActionResult Delete(int id)
         {
             logger.Info($"Opening Delete confirmation for EntryId={id}");
 
-            var entry = _entryService.GetById(id);
+            var entry = _entryService.GetByIdForUser(id, CurrentUserId);
             if (entry == null)
             {
-                logger.Warn($"EntryId={id} not found for deletion");
+                logger.Warn($"EntryId={id} not found or not owned by CurrentUserId={CurrentUserId} for deletion");
                 return HttpNotFound();
             }
 
-            var vm = MapToViewModel(entry);
-            return View(vm);
+            return View(MapToViewModel(entry));
         }
-
 
         // POST: /Entry/Delete/10
         [HttpPost, ActionName("Delete")]
@@ -185,10 +221,10 @@ namespace TravelJournal.Web.Controllers
 
             try
             {
-                var entry = _entryService.GetById(id);
+                var entry = _entryService.GetByIdForUser(id, CurrentUserId);
                 if (entry == null)
                 {
-                    logger.Warn($"EntryId={id} not found during deletion");
+                    logger.Warn($"EntryId={id} not found or not owned by CurrentUserId={CurrentUserId} during deletion");
                     return HttpNotFound();
                 }
 
@@ -197,7 +233,6 @@ namespace TravelJournal.Web.Controllers
                 _entryService.Delete(id);
 
                 logger.Info($"EntryId={id} deleted successfully");
-
                 return RedirectToAction("Index", new { journalId });
             }
             catch (Exception ex)
@@ -207,10 +242,11 @@ namespace TravelJournal.Web.Controllers
             }
         }
 
+        // -----------------------
+        // Mapping helpers
+        // -----------------------
 
-        // Mapping
-
-        private EntryViewModel MapToViewModel(Entry e)
+        private static EntryViewModel MapToViewModel(Entry e)
         {
             return new EntryViewModel
             {
@@ -225,13 +261,13 @@ namespace TravelJournal.Web.Controllers
             };
         }
 
-        private Entry MapToEntity(CreateEntryViewModel model)
+        private static Entry MapToEntityForCreate(CreateEntryViewModel model, int userId)
         {
             return new Entry
             {
-                EntryId = model.EntryId,
+                // EntryId va fi setat de DB
                 JournalId = model.JournalId,
-                UserId = model.UserId,
+                UserId = userId, // anti-tamper
                 Title = model.Title,
                 Content = model.Content,
                 Location = model.Location,
@@ -239,24 +275,5 @@ namespace TravelJournal.Web.Controllers
                 UpdatedAt = DateTime.Now
             };
         }
-
-        // GET: /Entry/Details?id=1
-        public ActionResult Details(int id)
-        {
-            logger.Info($"Accessing Entry Details for EntryId={id}");
-
-            var entry = _entryService.GetById(id);
-            if (entry == null)
-            {
-                logger.Warn($"EntryId={id} not found during Details");
-                return HttpNotFound();
-            }
-
-            var vm = MapToViewModel(entry);
-            return View(vm);
-        }
-
-
-
     }
 }

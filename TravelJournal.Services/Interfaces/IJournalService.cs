@@ -16,6 +16,8 @@ namespace TravelJournal.Services.Interfaces
         void Create(Journal journal);
         void Update(Journal journal);
         void Delete(int id);
+        Journal GetByIdForUser(int journalId, int userId);
+
     }
 }
 

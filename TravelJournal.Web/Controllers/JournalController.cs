@@ -1,12 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Web.Mvc;
 using TravelJournal.Services.Interfaces;
 using TravelJournal.Domain.Entities;
 using TravelJournal.Web.ViewModels.Journals;
 using NLog;
-
 
 namespace TravelJournal.Web.Controllers
 {
@@ -15,34 +13,39 @@ namespace TravelJournal.Web.Controllers
         private readonly IJournalService _journalService;
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
+        // Temporar până la auth/seed demo (în sprintul Seed+Flow îl înlocuim cu userul autentificat)
+        private const int CurrentUserId = 1;
 
         public JournalController(IJournalService journalService)
         {
             _journalService = journalService;
         }
 
-        // GET: /Journal?userId=5
-        public ActionResult Index(int userId)
+        // GET: /Journal
+        public ActionResult Index()
         {
             logger.Info("Accessing Journals/Index");
 
             try
             {
-                var journals = _journalService.GetByUser(userId);
+                var journals = _journalService.GetByUser(CurrentUserId);
 
                 var model = journals.Select(j => new JournalViewModel
                 {
                     JournalId = j.JournalId,
+                    UserId = j.UserId,
                     Title = j.Title,
                     Description = j.Description,
                     IsPublic = j.IsPublic,
                     CreatedAt = j.CreatedAt,
-                    EntryCount = j.Entries != null ? j.Entries.Count : 0
+                    EntryCount = j.Entries != null ? j.Entries.Count(e => !e.IsDeleted) : 0
                 }).ToList();
 
-                logger.Info($"Loaded {journals.Count()} journals from database");
+                logger.Info($"Loaded {model.Count} journals from database for CurrentUserId={CurrentUserId}");
 
-                ViewBag.UserId = userId;
+                // pentru link-uri în view (dacă le folosești)
+                ViewBag.UserId = CurrentUserId;
+
                 return View(model);
             }
             catch (Exception ex)
@@ -52,13 +55,17 @@ namespace TravelJournal.Web.Controllers
             }
         }
 
-
         // GET: /Journal/Details?id=1
         public ActionResult Details(int id)
         {
-            var journal = _journalService.GetById(id);
+            logger.Info($"Accessing Journal Details for JournalId={id}");
+
+            var journal = _journalService.GetByIdForUser(id, CurrentUserId);
             if (journal == null)
+            {
+                logger.Warn($"JournalId={id} not found or not owned by CurrentUserId={CurrentUserId} during Details");
                 return HttpNotFound();
+            }
 
             var vm = new JournalViewModel
             {
@@ -71,21 +78,17 @@ namespace TravelJournal.Web.Controllers
                 EntryCount = journal.Entries?.Count(e => !e.IsDeleted) ?? 0
             };
 
-            return View(vm); // ✅ CORECT
+            return View(vm);
         }
 
-
-
-
-        // GET: /Journal/Create?userId=5
-        public ActionResult Create(int userId)
+        // GET: /Journal/Create
+        public ActionResult Create()
         {
-            logger.Info($"Displaying Journal Create view for UserId={userId}");
-
+            logger.Info($"Displaying Journal Create view for CurrentUserId={CurrentUserId}");
 
             var model = new CreateJournalViewModel
             {
-                UserId = userId,
+                UserId = CurrentUserId,
                 IsPublic = true
             };
 
@@ -97,57 +100,52 @@ namespace TravelJournal.Web.Controllers
         [ValidateAntiForgeryToken]
         public ActionResult Create(CreateJournalViewModel model)
         {
-            logger.Info($"Attempting to create journal for UserId={model.UserId}");
+            logger.Info($"Attempting to create journal for CurrentUserId={CurrentUserId}");
 
             if (!ModelState.IsValid)
             {
                 logger.Warn("Journal creation failed — model invalid");
+                // Anti-tamper: repunem userId corect în model
+                model.UserId = CurrentUserId;
                 return View(model);
-
             }
 
             try
             {
-
+                // Anti-tamper: userId din context, nu din model
                 var journal = new Journal
-                 {
-                     UserId = model.UserId,
-                     Title = model.Title,
-                     Description = model.Description,
-                     IsPublic = model.IsPublic,
-                     CreatedAt = DateTime.Now,
-                     UpdatedAt = DateTime.Now
-                 };
+                {
+                    UserId = CurrentUserId,
+                    Title = model.Title,
+                    Description = model.Description,
+                    IsPublic = model.IsPublic,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
+                };
 
                 _journalService.Create(journal);
 
                 logger.Info($"Journal created successfully with ID={journal.JournalId}");
-
-
-                return RedirectToAction("Index", new { userId = model.UserId });
+                return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Error creating journal for UserId={model.UserId}");
+                logger.Error(ex, $"Error creating journal for CurrentUserId={CurrentUserId}");
                 return View("Error");
             }
-
         }
 
-        
         // GET: /Journal/Edit/5
         public ActionResult Edit(int id)
         {
-            logger.Info($"Accessing Journal Edit for ID={id}");
+            logger.Info($"Accessing Journal Edit for JournalId={id}");
 
-            var journal = _journalService.GetById(id);
+            var journal = _journalService.GetByIdForUser(id, CurrentUserId);
             if (journal == null)
             {
-                logger.Warn($"Journal ID={id} not found for editing");
+                logger.Warn($"JournalId={id} not found or not owned by CurrentUserId={CurrentUserId} for editing");
                 return HttpNotFound();
             }
-
-
 
             var model = new CreateJournalViewModel
             {
@@ -161,107 +159,97 @@ namespace TravelJournal.Web.Controllers
             return View(model);
         }
 
-
-
         // POST: /Journal/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Edit(CreateJournalViewModel model)
         {
-            logger.Info($"Attempting to update Journal ID={model.JournalId}");
+            logger.Info($"Attempting to update JournalId={model.JournalId} for CurrentUserId={CurrentUserId}");
 
             if (!ModelState.IsValid)
             {
-                logger.Warn($"Journal update failed — invalid model for ID={model.JournalId}");
+                logger.Warn($"Journal update failed — invalid model for JournalId={model.JournalId}");
+                // Anti-tamper: repunem userId corect
+                model.UserId = CurrentUserId;
                 return View(model);
             }
 
-
             try
             {
-                var journal = _journalService.GetById(model.JournalId);
-            if (journal == null)
-            {
-                logger.Warn($"Journal ID={model.JournalId} not found for update");
-                return HttpNotFound();
-            }
+                var journal = _journalService.GetByIdForUser(model.JournalId, CurrentUserId);
+                if (journal == null)
+                {
+                    logger.Warn($"JournalId={model.JournalId} not found or not owned by CurrentUserId={CurrentUserId} for update");
+                    return HttpNotFound();
+                }
 
-            journal.Title = model.Title;
-            journal.Description = model.Description;
-            journal.IsPublic = model.IsPublic;
-            journal.UpdatedAt = DateTime.Now;
+                journal.Title = model.Title;
+                journal.Description = model.Description;
+                journal.IsPublic = model.IsPublic;
+                journal.UpdatedAt = DateTime.Now;
 
-            _journalService.Update(journal);
+                _journalService.Update(journal);
 
-            logger.Info($"Journal ID={model.JournalId} updated successfully");
-
-            return RedirectToAction("Index", new { userId = model.UserId });
+                logger.Info($"JournalId={model.JournalId} updated successfully");
+                return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Error updating Journal ID={model.JournalId}");
+                logger.Error(ex, $"Error updating JournalId={model.JournalId}");
                 return View("Error");
             }
         }
 
-       
         // GET: /Journal/Delete/5
         public ActionResult Delete(int id)
         {
-            logger.Info($"Accessing Journal Delete confirmation for ID={id}");
+            logger.Info($"Accessing Journal Delete confirmation for JournalId={id}");
 
-            var journal = _journalService.GetById(id);
+            var journal = _journalService.GetByIdForUser(id, CurrentUserId);
             if (journal == null)
             {
-                logger.Warn($"Journal ID={id} not found for deletion");
+                logger.Warn($"JournalId={id} not found or not owned by CurrentUserId={CurrentUserId} for deletion");
                 return HttpNotFound();
             }
 
             var model = new JournalViewModel
             {
                 JournalId = journal.JournalId,
+                UserId = journal.UserId,
                 Title = journal.Title,
                 Description = journal.Description,
                 IsPublic = journal.IsPublic,
                 CreatedAt = journal.CreatedAt,
-                EntryCount = journal.Entries != null ? journal.Entries.Count : 0
+                EntryCount = journal.Entries != null ? journal.Entries.Count(e => !e.IsDeleted) : 0
             };
 
             return View(model);
         }
 
-        
         // POST: /Journal/Delete/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            logger.Info($"Attempting to delete Journal ID={id}");
+            logger.Info($"Attempting to delete JournalId={id} for CurrentUserId={CurrentUserId}");
 
-
-            try { 
-            var journal = _journalService.GetById(id);
-            
-
-            if (journal == null)
+            try
             {
-                logger.Warn($"Delete failed — Journal ID={id} not found");
-                return HttpNotFound();
-            }
+                var journal = _journalService.GetByIdForUser(id, CurrentUserId);
+                if (journal == null)
+                {
+                    logger.Warn($"Delete failed — JournalId={id} not found or not owned by CurrentUserId={CurrentUserId}");
+                    return HttpNotFound();
+                }
 
+                _journalService.Delete(id);
 
-            var userId = journal.UserId;
-
-            _journalService.Delete(id);
-
-            logger.Info($"Journal ID={id} deleted successfully");
-
-
-            return RedirectToAction("Index", new { userId });
+                logger.Info($"JournalId={id} deleted successfully");
+                return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Error deleting Journal ID={id}");
+                logger.Error(ex, $"Error deleting JournalId={id}");
                 return View("Error");
             }
         }

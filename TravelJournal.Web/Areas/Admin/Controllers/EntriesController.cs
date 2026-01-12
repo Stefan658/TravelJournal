@@ -6,9 +6,11 @@ using System.Web;
 using System.Web.Mvc;
 using TravelJournal.Domain.Entities;
 using TravelJournal.Services.Interfaces;
+using TravelJournal.Web.Infrastructure;
 
 namespace TravelJournal.Web.Areas.Admin.Controllers
 {
+    [AdminAuthorize]
     public class EntriesController : Controller
     {
         private readonly IEntryService _entryService;
@@ -105,5 +107,25 @@ namespace TravelJournal.Web.Areas.Admin.Controllers
             _entryService.Delete(id);
             return RedirectToAction("Index", new { journalId });
         }
+
+        // GET: Admin/Entries/Deleted?journalId=1
+        public ActionResult Deleted(int journalId)
+        {
+            var entries = _entryService.GetDeletedByJournal(journalId); // trebuie sa existe in service
+            ViewBag.JournalId = journalId;
+            return View(entries);
+        }
+
+        // POST: Admin/Entries/Restore/2?journalId=1  (sau cu form hidden journalId)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Restore(int id, int journalId)
+        {
+            _entryService.Restore(id); // trebuie sa existe in service
+            return RedirectToAction("Index", new { journalId });
+        }
+
+
+
     }
 }

@@ -143,5 +143,14 @@ namespace TravelJournal.Services.Implementations
             // IMPORTANT: ideal cu Entries incluse ca sa ai EntryCount corect in Admin
             return _journalAccessor.GetAll(includeEntries: true);
         }
+
+        public Journal GetByIdForUser(int journalId, int userId)
+        {
+            // fără cache la început (siguranță > optimizare)
+            var j = _journalAccessor.GetById(journalId);
+            if (j == null) return null;
+            return j.UserId == userId ? j : null;
+        }
+
     }
 }

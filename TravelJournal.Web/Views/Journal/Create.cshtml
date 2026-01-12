@@ -1,29 +1,51 @@
 ﻿@model TravelJournal.Web.ViewModels.Journals.CreateJournalViewModel
 
+@{
+    ViewBag.Title = "Create Journal";
+}
+
 <h2>Create Journal</h2>
-<hr />
 
-@using (Html.BeginForm("Create", "Journal", FormMethod.Post))
+@using (Html.BeginForm())
 {
-    @Html.HiddenFor(m => m.UserId)
+    @Html.AntiForgeryToken()
 
-    <div class="form-group">
-        @Html.LabelFor(m => m.Title)
-        @Html.TextBoxFor(m => m.Title, new { @class = "form-control" })
+    <div class="form-horizontal">
+        <hr />
+
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.Title, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.EditorFor(m => m.Title, new { htmlAttributes = new { @class = "form-control" } })
+                @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.Description, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = 4 })
+                @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger" })
+            </div>
+        </div>
+
+        <div class="form-group">
+            @Html.LabelFor(m => m.IsPublic, htmlAttributes: new { @class = "control-label col-md-2" })
+            <div class="col-md-10">
+                <div class="checkbox">
+                    @Html.CheckBoxFor(m => m.IsPublic)
+                    @Html.ValidationMessageFor(m => m.IsPublic, "", new { @class = "text-danger" })
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-10">
+                <input type="submit" value="Create" class="btn btn-success" />
+                @Html.ActionLink("Back to List", "Index", null, new { @class = "btn btn-default" })
+            </div>
+        </div>
     </div>
-
-    <div class="form-group">
-        @Html.LabelFor(m => m.Description)
-        @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = 4 })
-    </div>
-
-    <div class="form-group">
-        <label>Make Public?</label><br />
-        @Html.CheckBoxFor(m => m.IsPublic)
-    </div>
-
-    <button type="submit" class="btn btn-success">Create</button>
-    <a href="@Url.Action("Index", "Journal", new { userId = Model.UserId })" class="btn btn-secondary">
-        Back
-    </a>
 }

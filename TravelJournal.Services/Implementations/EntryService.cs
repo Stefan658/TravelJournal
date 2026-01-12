@@ -237,6 +237,14 @@ namespace TravelJournal.Services.Implementations
             }
         }
 
+        public Entry GetByIdForUser(int entryId, int userId)
+        {
+            var e = _entryAccessor.GetById(entryId);
+            if (e == null) return null;
+            if (e.IsDeleted) return null; // user area nu vede deleted
+            return e.UserId == userId ? e : null;
+        }
+
 
     }
 }

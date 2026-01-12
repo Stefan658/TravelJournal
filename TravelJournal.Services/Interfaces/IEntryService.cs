@@ -17,6 +17,8 @@ namespace TravelJournal.Services.Interfaces
         void Update(Entry entry);
         void Delete(int id);   // soft delete
         void Restore(int id);  // restore
+        Entry GetByIdForUser(int entryId, int userId);
+
     }
 }
 

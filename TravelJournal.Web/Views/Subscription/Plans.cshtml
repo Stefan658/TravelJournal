@@ -32,8 +32,8 @@
             // - Free: limitat
             // - Paid: media + pdf + map (în funcție de Price / StorageLimitMB)
             var canUploadMedia = plan.StorageLimitMB > 200;   // Free=200 => No; rest => Yes
-            var canExportPdf = plan.Price > 0;              // Paid => Yes
-            var canUseMap = plan.Price > 0;              // Paid => Yes
+            var canExportPdf = plan.Name == "Premium"; 
+            var canUseMap = plan.Name == "Premium";
 
             <tr>
                 <td>

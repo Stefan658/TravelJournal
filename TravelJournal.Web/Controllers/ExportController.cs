@@ -118,6 +118,61 @@ namespace TravelJournal.Web.Controllers
             };
             table.AddCell(cell);
         }
+
+        private string ResolvePhysicalPhotoPath(string rawPath)
+        {
+            if (string.IsNullOrWhiteSpace(rawPath))
+                return null;
+
+            // path relativ de tip "..\...\uploads\file.jpg"
+            if (rawPath.StartsWith("..\\") || rawPath.StartsWith("../"))
+            {
+                // ancorăm relativ la folderul aplicației (root-ul web)
+                var appRoot = Server.MapPath("~/");
+                var combined = Path.GetFullPath(Path.Combine(appRoot, rawPath));
+
+                return combined; // apoi în Export tu verifici File.Exists(combined)
+            }
+
+
+            // normalizează la virtual path
+            var virtualPath = rawPath.StartsWith("~")
+                ? rawPath
+                : rawPath.StartsWith("/")
+                    ? "~" + rawPath
+                    : "~/" + rawPath;
+
+            // 1) încercare directă
+            var p1 = TryMap(virtualPath);
+            if (!string.IsNullOrWhiteSpace(p1) && System.IO.File.Exists(p1))
+                return p1;
+
+            // 2) fallback: dacă e "/uploads/xxx.jpg", încearcă și "~/uploads/xxx.jpg"
+            if (rawPath.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase) ||
+                rawPath.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase))
+            {
+                var fileName = rawPath.TrimStart('~').TrimStart('/'); // "uploads/xxx.jpg"
+                var p2 = TryMap("~/" + fileName);
+                if (!string.IsNullOrWhiteSpace(p2) && System.IO.File.Exists(p2))
+                    return p2;
+
+                // 3) fallback: "~/Content/uploads/xxx.jpg" (dacă ai mutat acolo)
+                var p3 = TryMap("~/Content/" + fileName);
+                if (!string.IsNullOrWhiteSpace(p3) && System.IO.File.Exists(p3))
+                    return p3;
+            }
+
+            return null;
+        }
+
+        private string TryMap(string vpath)
+        {
+            try { return Server.MapPath(vpath); }
+            catch { return null; }
+        }
+
+
+
         private int GetCurrentUserId()
         {
             var username = User?.Identity?.Name;
@@ -126,7 +181,6 @@ namespace TravelJournal.Web.Controllers
             var user = _userService.GetByUsername(username);
             return user?.UserId ?? 0;
         }
-
 
         // GET: /Export/Export?entryId=13
         [HttpGet]
@@ -189,35 +243,7 @@ namespace TravelJournal.Web.Controllers
 
                     foreach (var p in photos)
                     {
-                        // adaptează proprietatea în funcție de modelul tău (FilePath / Path / Url)
-                        var rawPath = p.FilePath; // <-- dacă la tine se numește altfel, schimbă aici
-
-                        if (string.IsNullOrWhiteSpace(rawPath))
-                            continue;
-
-                        string physicalPath = null;
-
-                        // cazul 1: "~/Uploads/x.jpg"
-                        if (rawPath.StartsWith("~"))
-                        {
-                            physicalPath = Server.MapPath(rawPath);
-                        }
-                        // cazul 2: "/Uploads/x.jpg" sau "Uploads/x.jpg" (relativ)
-                        else if (!Path.IsPathRooted(rawPath) && !rawPath.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-                        {
-                            var virtualPath = rawPath.StartsWith("/") ? ("~" + rawPath) : ("~/" + rawPath);
-                            physicalPath = Server.MapPath(virtualPath);
-                        }
-                        // cazul 3: "C:\...\x.jpg" (deja fizic)
-                        else if (Path.IsPathRooted(rawPath))
-                        {
-                            physicalPath = rawPath;
-                        }
-                        // cazul 4: URL http/https -> îl sărim (nu facem download acum)
-                        else
-                        {
-                            continue;
-                        }
+                        var physicalPath = ResolvePhysicalPhotoPath(p.FilePath);
 
                         if (string.IsNullOrWhiteSpace(physicalPath) || !System.IO.File.Exists(physicalPath))
                             continue;
@@ -225,10 +251,11 @@ namespace TravelJournal.Web.Controllers
                         try
                         {
                             var img = iTextSharp.text.Image.GetInstance(physicalPath);
-                            img.ScaleToFit(500f, 350f); // safe pe A4
+                            img.ScaleToFit(500f, 350f);
                             img.Alignment = Element.ALIGN_LEFT;
                             doc.Add(img);
                             doc.Add(new Paragraph(" "));
+
                         }
                         catch
                         {
@@ -239,10 +266,10 @@ namespace TravelJournal.Web.Controllers
                 }
 
                 doc.Close();
-
                 return File(ms.ToArray(), "application/pdf", $"entry_{entry.EntryId}.pdf");
             }
         }
+
 
     }
 }

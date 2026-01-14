@@ -1,9 +1,111 @@
 ﻿@{
     ViewBag.Title = "About";
 }
-<main aria-labelledby="title">
-    <h2 id="title">@ViewBag.Title.</h2>
-    <h3>@ViewBag.Message</h3>
 
-    <p>Use this area to provide additional information.</p>
+<main class="container py-4" aria-labelledby="title">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 id="title" class="mb-0">@ViewBag.Title</h2>
+        <span class="badge bg-dark">TravelJournal</span>
+    </div>
+
+    <div class="row g-3">
+
+        <!-- Quick overview -->
+        <div class="col-12">
+            <div class="card p-3">
+                <h4 class="mb-2">What is TravelJournal?</h4>
+                <p class="text-muted mb-0">
+                    A simple, secure place where you can keep your travel stories organized and easy to revisit.
+                </p>
+            </div>
+        </div>
+
+        <!-- EN -->
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 p-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-primary">EN</span>
+                    <h5 class="mb-0">About the app</h5>
+                </div>
+
+                <p class="mb-3">
+                    <b>TravelJournal</b> is a modern application designed to help you store and relive your most meaningful
+                    travel memories. You can create personal journals for each destination, add daily entries, locations,
+                    and important experiences, all in a secure and well-organized space.
+                </p>
+
+                <p class="mb-2">
+                    The app includes multiple <b>subscription plans</b> tailored to different needs:
+                </p>
+
+                <ul class="mb-0">
+                    <li><b>Free</b> – create journals and entries, keep your memories organized.</li>
+                    <li><b>Premium</b> – unlock photo uploads for richer entries.</li>
+                    <li><b>Explorer</b> – unlock PDF export.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- RO -->
+        <div class="col-12 col-lg-6">
+            <div class="card h-100 p-3">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <span class="badge bg-success">RO</span>
+                    <h5 class="mb-0">Despre aplicație</h5>
+                </div>
+
+                <p class="mb-3">
+                    <b>TravelJournal</b> este o aplicație modernă creată pentru a te ajuta să păstrezi și să retrăiești
+                    cele mai frumoase amintiri din călătoriile tale. Poți crea jurnale pentru fiecare destinație, adăuga
+                    însemnări zilnice, locații și experiențe importante, totul într-un spațiu sigur și organizat.
+                </p>
+
+                <p class="mb-2">
+                    Aplicația oferă mai multe <b>planuri de abonament</b>, adaptate nevoilor fiecărui utilizator:
+                </p>
+
+                <ul class="mb-0">
+                    <li><b>Free</b> – creezi jurnale și însemnări de bază, ușor de organizat.</li>
+                    <li><b>Premium</b> – deblochezi încărcarea de fotografii pentru însemnări mai complete.</li>
+                    <li><b>Explorer</b> – deblochezi export PDF.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- CTA -->
+        <div class="col-12">
+            <div class="card p-3">
+                <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div>
+                        <h5 class="mb-1">Ready to start?</h5>
+                        <div class="text-muted">
+                            Create new journals and keep your memories in one place.
+                        </div>
+                    </div>
+
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-primary"
+                               href="@Url.Action("Create", "Journal")">
+                                Start New Journal
+                            </a>
+                            <a class="btn btn-outline-secondary"
+                               href="@Url.Action("Index", "Journal")">
+                                View My Journals
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <a class="btn btn-primary"
+                           href="@Url.Action("Login", "Account")">
+                            Login
+                        </a>
+                    }
+                </div>
+            </div>
+        </div>
+
+    </div>
 </main>

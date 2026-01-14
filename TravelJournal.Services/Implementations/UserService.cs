@@ -4,6 +4,7 @@ using TravelJournal.Data.Accessors;
 using TravelJournal.Domain.Entities;
 using TravelJournal.Services.Interfaces;
 using NLog;
+using System.Linq;
 
 namespace TravelJournal.Services.Implementations
 {
@@ -127,5 +128,27 @@ namespace TravelJournal.Services.Implementations
                 throw;
             }
         }
+
+        public User GetByUsername(string username)
+        {
+            logger.Info($"[UserService] GetByUsername called for Username='{username}'");
+
+            try
+            {
+                var users = _userAccessor.GetAll();
+                var user = users.FirstOrDefault(u => u.Username == username);
+
+                if (user == null)
+                    logger.Warn($"[UserService] Username='{username}' not found");
+
+                return user;
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "[UserService] Error in GetByUsername");
+                throw;
+            }
+        }
+
     }
 }

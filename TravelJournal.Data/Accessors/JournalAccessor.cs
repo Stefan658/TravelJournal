@@ -102,27 +102,52 @@ namespace TravelJournal.Data.Accessors
 
         public void Delete(int id)
         {
-            logger.Info($"[JournalAccessor] Deleting JournalId={id}");
+            logger.Info($"[JournalAccessor] Deleting JournalId={id} (cascade)");
 
             try
             {
-                var journal = _db.Journals.Find(id);
+                // includem Entries ca să putem face cascade manual
+                var journal = _db.Journals
+                    .Include(j => j.Entries)
+                    .FirstOrDefault(j => j.JournalId == id);
 
-                if (!(_db.Journals.Find(id) is Journal found))
+                if (journal == null)
                 {
                     logger.Warn($"[JournalAccessor] Delete failed — JournalId={id} not found");
                     return;
                 }
 
-                _db.Journals.Remove(found);
+                var entryIds = journal.Entries?.Select(e => e.EntryId).ToList() ?? new List<int>();
+
+                // 1) Stergem Photos pentru entries din jurnal
+                if (entryIds.Any())
+                {
+                    var photos = _db.Set<Photo>().Where(p => entryIds.Contains(p.EntryId)).ToList();
+                    if (photos.Any())
+                        _db.Set<Photo>().RemoveRange(photos);
+
+                    // 2) Stergem Media pentru entries din jurnal
+                    var media = _db.Set<Media>().Where(m => entryIds.Contains(m.EntryId)).ToList();
+                    if (media.Any())
+                        _db.Set<Media>().RemoveRange(media);
+
+                    // 3) Stergem Entries
+                    _db.Entries.RemoveRange(journal.Entries);
+                }
+
+                // 4) Stergem Journal
+                _db.Journals.Remove(journal);
+
                 _db.SaveChanges();
-                logger.Info($"[JournalAccessor] JournalId={id} deleted successfully");
+
+                logger.Info($"[JournalAccessor] JournalId={id} deleted successfully (cascade)");
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"[JournalAccessor] Error deleting JournalId={id}");
+                logger.Error(ex, $"[JournalAccessor] Error deleting JournalId={id} (cascade)");
                 throw;
             }
         }
+
     }
 }

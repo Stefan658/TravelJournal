@@ -1,0 +1,39 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>@ViewBag.Title - TravelJournal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- CSS (fara bundling) -->
+    <link href="~/Content/bootstrap.min.css" rel="stylesheet" />
+    <link href="~/Content/site.css?v=@DateTime.Now.Ticks" rel="stylesheet" />
+</head>
+
+<body class="d-flex flex-column min-vh-100 bg-login">
+
+    <!-- Minimal Navbar -->
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container">
+            <span class="navbar-brand">TravelJournal</span>
+        </div>
+    </nav>
+
+    <main class="flex-fill d-flex align-items-center justify-content-center bg-transparent">
+        @RenderBody()
+    </main>
+
+
+
+    <!-- Footer (mereu vizibil, fara scroll) -->
+    <footer class="border-top text-center text-muted py-2">
+        © @DateTime.Now.Year - TravelJournal
+    </footer>
+
+    <!-- JS (fara bundling) -->
+    <script src="~/Scripts/jquery-3.7.1.min.js"></script>
+    <script src="~/Scripts/bootstrap.min.js"></script>
+
+    @RenderSection("scripts", required: false)
+</body>
+</html>

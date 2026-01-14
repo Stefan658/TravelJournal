@@ -19,33 +19,40 @@ namespace TravelJournal.Web.Controllers
             _userService = userService;
         }
 
-        // GET: /Subscription/Plans?userId=1
-        public ActionResult Plans(int userId = 1)
+        // GET: /Subscription/Plans
+        [Authorize]
+        public ActionResult Plans()
         {
+            var username = User.Identity.Name;
+            var user = _userService.GetByUsername(username);
+            if (user == null) return HttpNotFound();
+
             var plans = _subscriptionService.GetAll().ToList();
-            var user = _userService.GetById(userId);
 
             var vm = new PlansViewModel
             {
-                UserId = userId,
-                CurrentSubscriptionId = user?.SubscriptionId ?? 0,
+                UserId = user.UserId,
+                CurrentSubscriptionId = user.SubscriptionId,
                 Plans = plans
             };
 
             return View(vm);
         }
 
-        // GET: /Subscription/My?userId=1
-        public ActionResult My(int userId = 1)
+
+        // GET: /Subscription/My
+        [Authorize]
+        public ActionResult My()
         {
-            var user = _userService.GetById(userId);
+            var username = User.Identity.Name;
+            var user = _userService.GetByUsername(username);
             if (user == null) return HttpNotFound("User not found.");
 
             var plan = _subscriptionService.GetById(user.SubscriptionId);
 
             var vm = new MySubscriptionViewModel
             {
-                UserId = userId,
+                UserId = user.UserId,
                 Username = user.Username,
                 CurrentPlanName = plan?.Name ?? "Unknown",
                 CurrentPlanPrice = plan?.Price ?? 0,
@@ -57,23 +64,27 @@ namespace TravelJournal.Web.Controllers
             return View(vm);
         }
 
+
         // POST: /Subscription/ChangePlan
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult ChangePlan(int userId, int planId)
+        [Authorize]
+        public ActionResult ChangePlan(int planId)
         {
-            var user = _userService.GetById(userId);
-            if (user == null) return HttpNotFound("User not found.");
+            var username = User.Identity.Name;
+            var user = _userService.GetByUsername(username);
+            if (user == null) return HttpNotFound();
 
             var plan = _subscriptionService.GetById(planId);
-            if (plan == null) return HttpNotFound("Plan not found.");
-            if (!plan.IsActive) return new HttpStatusCodeResult(400, "Plan is inactive.");
+            if (plan == null || !plan.IsActive)
+                return new HttpStatusCodeResult(400);
 
             user.SubscriptionId = planId;
             _userService.Update(user);
 
             TempData["Success"] = $"Plan changed to: {plan.Name}";
-            return RedirectToAction("My", new { userId });
+            return RedirectToAction("My");
         }
+
     }
 }

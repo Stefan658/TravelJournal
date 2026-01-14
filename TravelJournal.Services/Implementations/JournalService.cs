@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
+using NLog;
+
 using TravelJournal.Data.Accessors;
 using TravelJournal.Domain.Entities;
 using TravelJournal.Services.Interfaces;
-using NLog;
-
 
 namespace TravelJournal.Services.Implementations
 {
@@ -13,144 +14,118 @@ namespace TravelJournal.Services.Implementations
     {
         private readonly IJournalAccessor _journalAccessor;
         private readonly ICache _cache;
-
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
         public JournalService(IJournalAccessor journalAccessor, ICache cache)
         {
-            _journalAccessor = journalAccessor;
-            _cache = cache;
-
+            _journalAccessor = journalAccessor ?? throw new ArgumentNullException(nameof(journalAccessor));
+            _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         }
 
         public IEnumerable<Journal> GetByUser(int userId)
         {
-            string key = $"journals_user_{userId}";
-            logger.Info($"[JournalService] Retrieving journals for UserId={userId}");
+            if (userId <= 0) throw new ArgumentOutOfRangeException(nameof(userId));
 
-            try
+            var key = $"journals_user_{userId}";
+            logger.Info($"[JournalService] GetByUser userId={userId}");
+
+            if (_cache.IsSet(key))
             {
-                if (_cache.IsSet(key))
-                {
-                    logger.Info($"[JournalService] Cache HIT for {key}");
-                    return _cache.Get<IEnumerable<Journal>>(key);
-                }
-
-                logger.Info($"[JournalService] Cache MISS for {key}");
-                var journals = _journalAccessor.GetAllByUser(userId).ToList();
-                _cache.Set(key, journals);
-
-                return journals;
+                logger.Info($"[JournalService] Cache HIT {key}");
+                return _cache.Get<IEnumerable<Journal>>(key) ?? Enumerable.Empty<Journal>();
             }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"[JournalService] Error retrieving journals for UserId={userId}");
-                throw;
-            }
+
+            logger.Info($"[JournalService] Cache MISS {key}");
+            var journals = _journalAccessor.GetAllByUser(userId).ToList();
+
+            _cache.Set(key, journals);
+            return journals;
         }
 
+        public IEnumerable<Journal> GetAll()
+        {
+            // Admin use-case (nu user area)
+            logger.Info("[JournalService] GetAll");
+            return _journalAccessor.GetAll(includeEntries: true);
+        }
 
         public Journal GetById(int id)
         {
-            string key = $"journal_{id}";
-            logger.Info($"[JournalService] GetById called for JournalId={id}");
+            if (id <= 0) throw new ArgumentOutOfRangeException(nameof(id));
 
-            try
+            var key = $"journal_{id}";
+            logger.Info($"[JournalService] GetById id={id}");
+
+            if (_cache.IsSet(key))
             {
-                if (_cache.IsSet(key))
-                {
-                    logger.Info($"[JournalService] Cache HIT for {key}");
-                    return _cache.Get<Journal>(key);
-                }
-
-                logger.Info($"[JournalService] Cache MISS for {key}");
-                var journal = _journalAccessor.GetById(id);
-
-                if (journal != null)
-                    _cache.Set(key, journal);
-                else
-                    logger.Warn($"[JournalService] JournalId={id} not found");
-
-                return journal;
+                logger.Info($"[JournalService] Cache HIT {key}");
+                return _cache.Get<Journal>(key);
             }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"[JournalService] Error in GetById for JournalId={id}");
-                throw;
-            }
+
+            logger.Info($"[JournalService] Cache MISS {key}");
+            var journal = _journalAccessor.GetById(id);
+
+            _cache.Set(key, journal);
+            return journal;
         }
-
 
         public void Create(Journal journal)
         {
-            logger.Info($"[JournalService] Creating journal for UserId={journal.UserId}");
+            if (journal == null) throw new ArgumentNullException(nameof(journal));
 
-            try
-            {
-                _journalAccessor.Add(journal);
-                _cache.RemoveByPattern("journals_user_");
+            logger.Info($"[JournalService] Create userId={journal.UserId}");
 
-                logger.Info($"[JournalService] Journal created successfully (Id={journal.JournalId})");
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, "[JournalService] Error creating journal");
-                throw;
-            }
+            _journalAccessor.Add(journal);
+
+            // invalidare: lista userului
+            _cache.Remove($"journals_user_{journal.UserId}");
         }
 
         public void Update(Journal journal)
         {
-            logger.Info($"[JournalService] Updating JournalId={journal.JournalId}");
+            if (journal == null) throw new ArgumentNullException(nameof(journal));
 
-            try
-            {
-                _journalAccessor.Update(journal);
-                _cache.Remove($"journal_{journal.JournalId}");
-                _cache.RemoveByPattern("journals_user_");
+            logger.Info($"[JournalService] Update journalId={journal.JournalId} userId={journal.UserId}");
 
-                logger.Info($"[JournalService] JournalId={journal.JournalId} updated successfully");
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"[JournalService] Error updating JournalId={journal.JournalId}");
-                throw;
-            }
+            _journalAccessor.Update(journal);
+
+            _cache.Remove($"journal_{journal.JournalId}");
+            _cache.Remove($"journals_user_{journal.UserId}");
         }
 
         public void Delete(int id)
         {
-            logger.Info($"[JournalService] Deleting JournalId={id}");
+            if (id <= 0) throw new ArgumentOutOfRangeException(nameof(id));
 
-            try
+            logger.Info($"[JournalService] Delete journalId={id}");
+
+            // pentru invalidare corecta, aflam userId-ul jurnalului
+            var existing = _journalAccessor.GetById(id);
+
+            _journalAccessor.Delete(id);
+
+            _cache.Remove($"journal_{id}");
+            if (existing != null)
             {
-                _journalAccessor.Delete(id);
-                _cache.Remove($"journal_{id}");
+                _cache.Remove($"journals_user_{existing.UserId}");
+            }
+            else
+            {
+                // fallback safe
                 _cache.RemoveByPattern("journals_user_");
-
-                logger.Info($"[JournalService] JournalId={id} deleted successfully");
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"[JournalService] Error deleting JournalId={id}");
-                throw;
             }
         }
 
-
-        public IEnumerable<Journal> GetAll()
-        {
-            // IMPORTANT: ideal cu Entries incluse ca sa ai EntryCount corect in Admin
-            return _journalAccessor.GetAll(includeEntries: true);
-        }
-
+        // Ownership enforcement (critica)
         public Journal GetByIdForUser(int journalId, int userId)
         {
-            // fără cache la început (siguranță > optimizare)
+            if (journalId <= 0 || userId <= 0) return null;
+
+            // fara cache aici (siguranta > perf)
             var j = _journalAccessor.GetById(journalId);
             if (j == null) return null;
+
             return j.UserId == userId ? j : null;
         }
-
     }
 }

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 
+using TravelJournal.Domain.Entities;
+
 namespace TravelJournal.Web.ViewModels.Entries
 {
     public class EntryViewModel
@@ -21,5 +23,13 @@ namespace TravelJournal.Web.ViewModels.Entries
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        public IEnumerable<Photo> Photos { get; set; }
+        public bool CanUploadPhotos { get; set; }
+        public string SubscriptionName { get; set; }
+        public bool CanExportPdf { get; set; }
+
+
+
     }
 }

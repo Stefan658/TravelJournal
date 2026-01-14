@@ -1,13 +1,11 @@
-﻿/* Set padding to keep content from hitting the edges */
-.body-content {
-    margin-top: 15px;
-    padding-left: 15px;
-    padding-right: 15px;
-}
+﻿/* ==========================================================================
+   Site.css (TravelJournal)
+   - pastreaza stilurile template + background Login + background Global App
+   - fara warning "cover is not valid value for background" (nu folosim shorthand)
+   ========================================================================== */
 
-/* Override the default bootstrap behavior where horizontal description lists 
-   will truncate terms that are too long to fit in the left column 
-*/
+/* Override the default bootstrap behavior where horizontal description lists
+   will truncate terms that are too long to fit in the left column */
 .dl-horizontal dt {
     white-space: normal;
 }
@@ -17,4 +15,134 @@ input,
 select,
 textarea {
     max-width: 280px;
+}
+
+/* --------------------------------------------------------------------------
+   BASIC TEMPLATE (ASP.NET MVC default)
+   -------------------------------------------------------------------------- */
+body {
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+/* Set padding to keep content from hitting the edges */
+.body-content {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+/* Validation helpers */
+.field-validation-error {
+    color: #b94a48;
+}
+
+.field-validation-valid {
+    display: none;
+}
+
+.input-validation-error {
+    border: 1px solid #b94a48;
+}
+
+.validation-summary-errors {
+    color: #b94a48;
+}
+
+.validation-summary-valid {
+    display: none;
+}
+
+/* --------------------------------------------------------------------------
+   BACKGROUNDS (Login + Global App)
+   -------------------------------------------------------------------------- */
+html, body {
+    height: 100%;
+}
+
+    /* ===================== LOGIN (LayoutMinimal) ===================== */
+    body.bg-login {
+        position: relative;
+        min-height: 100vh;
+        background-image: url("/Content/images/bg-login.png");
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: cover;
+        background-attachment: fixed;
+    }
+
+        /* Pastreaza main/footer transparente peste background */
+        body.bg-login main,
+        body.bg-login footer {
+            background: transparent !important;
+        }
+
+    /* ===================== GLOBAL APP (Layout normal) ===================== */
+    body.bg-app {
+        position: relative;
+        min-height: 100vh;
+        background-image: url("/Content/images/backg.jpg");
+        background-repeat: no-repeat;
+        background-position: center center;
+        background-size: cover;
+        background-attachment: fixed;
+    }
+
+        /* Overlay discret (peste imagine, sub continut) */
+        body.bg-app::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.35);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+/* Asiguram ca navbar + continutul sunt peste overlay */
+.navbar,
+.body-content,
+footer,
+main {
+    position: relative;
+    z-index: 1;
+}
+
+/* Card alb pentru paginile normale (ca sa fie lizibil, dar sa se vada fundalul) */
+body.bg-app .body-content {
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 12px;
+    margin-top: 22px;
+    margin-bottom: 22px;
+    padding: 22px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.10);
+}
+
+/* Tabele / elemente comune - le facem usor mai curate peste fundal */
+body.bg-app .table {
+    background: rgba(255, 255, 255, 0.92);
+}
+
+    body.bg-app .table th,
+    body.bg-app .table td {
+        background: transparent; /* lasam table background sa domine */
+    }
+
+/* Optional: titluri mai lizibile pe fundal */
+body.bg-app h1, body.bg-app h2, body.bg-app h3 {
+    text-shadow: 0 1px 0 rgba(255,255,255,0.5);
+}
+
+.btn-primary:hover {
+    background-color: #0b5ed7;
+}
+
+.btn-success:hover {
+    background-color: #157347;
+}
+
+.btn-warning:hover {
+    background-color: #d39e00;
+}
+
+.btn-danger:hover {
+    background-color: #bb2d3b;
 }

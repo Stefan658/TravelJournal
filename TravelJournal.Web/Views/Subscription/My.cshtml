@@ -24,9 +24,11 @@
             <li>Map: @(Model.CanUseMap ? "Allowed" : "Blocked (Upgrade)")</li>
         </ul>
 
-        <a class="btn btn-default" href="@Url.Action("Plans", "Subscription", new { userId = Model.UserId })">
+        <a class="btn btn-outline-dark btn-sm"
+           href="@Url.Action("Plans", "Subscription")">
             View Plans / Change
         </a>
+
 
         @if (Model.CanExportPdf)
         {

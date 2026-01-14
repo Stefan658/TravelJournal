@@ -141,10 +141,12 @@
     <Compile Include="Accessors\IEntryAccessor.cs" />
     <Compile Include="Accessors\IJournalAccessor.cs" />
     <Compile Include="Accessors\IMediaAccessor.cs" />
+    <Compile Include="Accessors\IPhotoAccessor.cs" />
     <Compile Include="Accessors\ISubscriptionAccessor.cs" />
     <Compile Include="Accessors\IUserAccessor.cs" />
     <Compile Include="Accessors\JournalAccessor.cs" />
     <Compile Include="Accessors\MediaAccessor.cs" />
+    <Compile Include="Accessors\PhotoAccessor.cs" />
     <Compile Include="Accessors\SubscriptionAccessor.cs" />
     <Compile Include="Accessors\UserAccessor.cs" />
     <Compile Include="Context\TravelJournalDbContext.cs" />

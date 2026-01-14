@@ -104,12 +104,14 @@
     <Compile Include="Implementations\JournalService.cs" />
     <Compile Include="Implementations\MediaService.cs" />
     <Compile Include="Implementations\MemoryCacheService.cs" />
+    <Compile Include="Implementations\PhotoService.cs" />
     <Compile Include="Implementations\SubscriptionService.cs" />
     <Compile Include="Implementations\UserService.cs" />
     <Compile Include="Interfaces\ICache.cs" />
     <Compile Include="Interfaces\IEntryService.cs" />
     <Compile Include="Interfaces\IJournalService.cs" />
     <Compile Include="Interfaces\IMediaService.cs" />
+    <Compile Include="Interfaces\IPhotoService.cs" />
     <Compile Include="Interfaces\ISubscriptionService.cs" />
     <Compile Include="Interfaces\IUserService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

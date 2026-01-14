@@ -55,6 +55,9 @@
     <Reference Include="Autofac.Integration.WebApi, Version=6.2.0.0, Culture=neutral, PublicKeyToken=17863af14b0044da, processorArchitecture=MSIL">
       <HintPath>..\packages\Autofac.WebApi2.6.2.0\lib\net472\Autofac.Integration.WebApi.dll</HintPath>
     </Reference>
+    <Reference Include="BCrypt.Net-Next, Version=4.0.3.0, Culture=neutral, PublicKeyToken=1e11be04b6288443, processorArchitecture=MSIL">
+      <HintPath>..\packages\BCrypt.Net-Next.4.0.3\lib\net472\BCrypt.Net-Next.dll</HintPath>
+    </Reference>
     <Reference Include="BouncyCastle.Cryptography, Version=2.0.0.0, Culture=neutral, PublicKeyToken=072edcf4a5328938, processorArchitecture=MSIL">
       <HintPath>..\packages\BouncyCastle.Cryptography.2.4.0\lib\net461\BouncyCastle.Cryptography.dll</HintPath>
     </Reference>
@@ -213,6 +216,7 @@
     <Compile Include="Areas\Admin\AdminAreaRegistration.cs" />
     <Compile Include="Areas\Admin\Controllers\EntriesController.cs" />
     <Compile Include="Areas\Admin\Controllers\JournalsController.cs" />
+    <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\EntryController.cs" />
     <Compile Include="Controllers\ExportController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
@@ -221,9 +225,12 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Helpers\PhotoStorage.cs" />
     <Compile Include="Infrastructure\AdminAuthorizeAttribute.cs" />
     <Compile Include="Infrastructure\Autofac\AutofacConfig.cs" />
+    <Compile Include="Infrastructure\DbRoleProvider.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ViewModels\Account\LoginViewModel.cs" />
     <Compile Include="ViewModels\Entries\CreateEntryViewModel.cs" />
     <Compile Include="ViewModels\Entries\EntryViewModel.cs" />
     <Compile Include="ViewModels\Home\DashboardViewModel.cs" />
@@ -251,6 +258,8 @@
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\bootstrap.rtl.css" />
     <Content Include="Content\bootstrap.rtl.min.css" />
+    <Content Include="Content\images\backg.jpg" />
+    <Content Include="Content\images\bg-login.png" />
     <Content Include="favicon.ico" />
     <Content Include="Global.asax" />
     <Content Include="Content\Site.css" />
@@ -288,6 +297,21 @@
     <Content Include="Scripts\jquery.validate.unobtrusive.js" />
     <Content Include="Scripts\jquery.validate.unobtrusive.min.js" />
     <Content Include="Scripts\modernizr-2.8.3.js" />
+    <Content Include="uploads\amsterdam_dam.jpg" />
+    <Content Include="uploads\barcelona_sagrada.jpg" />
+    <Content Include="uploads\berlin_alexanderplatz.jpg" />
+    <Content Include="uploads\bucharest_victoriei.jpg" />
+    <Content Include="uploads\cinque_terre_vernazza.jpg" />
+    <Content Include="uploads\cluj_unirii.jpg" />
+    <Content Include="uploads\dolomites_seceda.jpg" />
+    <Content Include="uploads\london_canary_wharf.jpg" />
+    <Content Include="uploads\paris_eiffel.jpg" />
+    <Content Include="uploads\plitvice_lakes.jpg" />
+    <Content Include="uploads\roma_colosseum.jpg" />
+    <Content Include="uploads\roma_vatican.jpg" />
+    <Content Include="uploads\transfagarasan_balea.jpg" />
+    <Content Include="uploads\vienna_stephansplatz.jpg" />
+    <Content Include="uploads\zermatt_matterhorn.jpg" />
     <Content Include="Web.config" />
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
@@ -315,6 +339,8 @@
     <Content Include="Views\Subscription\Plans.cshtml" />
     <Content Include="Views\Subscription\My.cshtml" />
     <Content Include="Views\Home\Dashboard.cshtml" />
+    <Content Include="Views\Account\Login.cshtml" />
+    <Content Include="Views\Shared\_LayoutMinimal.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

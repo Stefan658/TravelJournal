@@ -1,5 +1,7 @@
 ﻿@model IEnumerable<TravelJournal.Web.ViewModels.Entries.EntryViewModel>
 
+
+
 <h2>Entries</h2>
 <hr />
 
@@ -20,20 +22,25 @@
         <tr>
             <td>@e.Title</td>
             <td>@e.CreatedAt.ToString("g")</td>
-            <td>
-                <a href="@Url.Action("Details", "Entry", new { id = e.EntryId })"
-                   class="btn btn-info btn-sm">
-                    Details
-                </a>
+            <td class="text-end">
+                <div class="d-flex gap-2 justify-content-end">
+                    <a class="btn btn-info btn-sm text-white px-3"
+                       href="@Url.Action("Details", "Entry", new { id = e.EntryId })">
+                        Details
+                    </a>
 
+                    <a class="btn btn-warning btn-sm text-white px-3"
+                       href="@Url.Action("Edit", "Entry", new { id = e.EntryId })">
+                        Edit
+                    </a>
 
-                <a href="@Url.Action("Edit", "Entry", new { id = e.EntryId, journalId = ViewBag.JournalId })
-"
-                   class="btn btn-warning btn-sm">Edit</a>
-
-                <a href="@Url.Action("Delete", "Entry", new { id = e.EntryId })"
-                   class="btn btn-danger btn-sm">Delete</a>
+                    <a class="btn btn-danger btn-sm px-3"
+                       href="@Url.Action("Delete", "Entry", new { id = e.EntryId })">
+                        Delete
+                    </a>
+                </div>
             </td>
+
         </tr>
     }
 </table>

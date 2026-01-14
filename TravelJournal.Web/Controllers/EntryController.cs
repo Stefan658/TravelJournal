@@ -1,279 +1,436 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Web.Mvc;
+using iTextSharp.text.pdf;
+
+using iTextSharp.text;
+
+using NLog;
+
 using TravelJournal.Domain.Entities;
 using TravelJournal.Services.Interfaces;
+using TravelJournal.Web.Helpers;
 using TravelJournal.Web.ViewModels.Entries;
-using NLog;
+using TravelJournal.Web.ViewModels.Photos;
+using System.Collections.Generic;
 
 namespace TravelJournal.Web.Controllers
 {
+    [Authorize]
     public class EntryController : Controller
     {
         private readonly IEntryService _entryService;
         private readonly IJournalService _journalService;
+        private readonly IPhotoService _photoService;
+        private readonly IUserService _userService;
+        private readonly ISubscriptionService _subscriptionService;
+
         private static readonly Logger logger = LogManager.GetCurrentClassLogger();
 
-        // Temporar până la auth/seed demo (în sprintul Seed+Flow îl înlocuim cu userul autentificat)
-        private const int CurrentUserId = 1;
-
-        public EntryController(IEntryService entryService, IJournalService journalService)
+        public EntryController(
+            IEntryService entryService,
+            IJournalService journalService,
+            IPhotoService photoService,
+            IUserService userService,
+            ISubscriptionService subscriptionService)
         {
-            _entryService = entryService;
-            _journalService = journalService;
+            _entryService = entryService ?? throw new ArgumentNullException(nameof(entryService));
+            _journalService = journalService ?? throw new ArgumentNullException(nameof(journalService));
+            _photoService = photoService ?? throw new ArgumentNullException(nameof(photoService));
+            _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+            _subscriptionService = subscriptionService ?? throw new ArgumentNullException(nameof(subscriptionService));
         }
 
-        // GET: /Entry?journalId=5
+        private int GetCurrentUserId()
+        {
+            var username = User?.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(username)) return 0;
+
+            var user = _userService.GetByUsername(username);
+            return user?.UserId ?? 0;
+        }
+
+        // RouteConfig: "/journals/{journalId}/entries" => Entry/Index
         public ActionResult Index(int journalId)
         {
-            logger.Info($"Accessing Entries/Index for JournalId={journalId}");
+            logger.Info($"[EntryController] Index journalId={journalId}");
 
             try
             {
-                // Ownership guard: userul curent trebuie să dețină jurnalul
-                var journal = _journalService.GetByIdForUser(journalId, CurrentUserId);
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId <= 0) return new HttpUnauthorizedResult();
+
+                // ownership guard pe jurnal
+                var journal = _journalService.GetByIdForUser(journalId, currentUserId);
                 if (journal == null)
-                {
-                    logger.Warn($"JournalId={journalId} not found or not owned by CurrentUserId={CurrentUserId}");
                     return HttpNotFound();
-                }
 
                 var entries = _entryService.GetByJournal(journalId)
-                                           .Where(e => !e.IsDeleted && e.UserId == CurrentUserId)
-                                           .Select(MapToViewModel)
-                                           .ToList();
-
-                logger.Info($"Loaded {entries.Count} entries for JournalId={journalId}");
+                    .Where(e => !e.IsDeleted && e.UserId == currentUserId)
+                    .Select(e => new EntryViewModel
+                    {
+                     EntryId = e.EntryId,
+                     Title = e.Title,
+                     CreatedAt = e.CreatedAt,
+                     JournalId = e.JournalId
+                    })
+                     .ToList();
 
                 ViewBag.JournalId = journalId;
+                ViewBag.JournalTitle = journal.Title;
+
                 return View(entries);
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Error loading entries for JournalId={journalId}");
+                logger.Error(ex, $"[EntryController] Error loading entries list (journalId={journalId})");
                 return View("Error");
             }
         }
 
-        // GET: /Entry/Details?id=1
+        // RouteConfig: "/entries/{id}" => Entry/Details
         public ActionResult Details(int id)
         {
-            logger.Info($"Accessing Entry Details for EntryId={id}");
+            logger.Info($"[EntryController] Details entryId={id}");
 
-            var entry = _entryService.GetByIdForUser(id, CurrentUserId);
-            if (entry == null)
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId <= 0) return new HttpUnauthorizedResult();
+
+            // ownership guard: entry must belong to current user
+            var entry = _entryService.GetByIdForUser(id, currentUserId);
+            if (entry == null) return HttpNotFound();
+
+            var sub = _userService.GetSubscription(currentUserId);
+
+            var subId = sub?.SubscriptionId ?? 0;   // sau sub?.Id, vezi cum e la tine în entity
+
+            var photos = _photoService.GetByEntry(id)?.ToList();
+
+            var vm = new TravelJournal.Web.ViewModels.Entries.EntryViewModel
             {
-                logger.Warn($"EntryId={id} not found or not owned by CurrentUserId={CurrentUserId} during Details");
-                return HttpNotFound();
-            }
+                EntryId = entry.EntryId,
+                Title = entry.Title,
+                // completeaza cu ce ai in entity (exact acele proprietati existente):
+                Content = entry.Content,
+                Location = entry.Location,
+              
 
-            return View(MapToViewModel(entry));
-        }
+                CreatedAt = entry.CreatedAt,
+                UpdatedAt = entry.UpdatedAt,
+                JournalId = entry.JournalId,
+                UserId = entry.UserId,
 
-        // GET: /Entry/Create?journalId=5
-        public ActionResult Create(int journalId)
-        {
-            logger.Info($"Opening Create Entry page for JournalId={journalId}");
+                Photos = photos,
+                SubscriptionName = sub?.Name ?? "Free",
 
-            // Ownership guard: userul curent trebuie să dețină jurnalul
-            var journal = _journalService.GetByIdForUser(journalId, CurrentUserId);
-            if (journal == null)
-            {
-                logger.Warn($"JournalId={journalId} not found or not owned by CurrentUserId={CurrentUserId} when accessing Create Entry");
-                return HttpNotFound();
-            }
+                CanUploadPhotos = _subscriptionService.CanUploadMedia(subId),
+                CanExportPdf = _subscriptionService.CanExportPdf(subId)
 
-            var model = new CreateEntryViewModel
-            {
-                JournalId = journalId,
-                // NU ne bazăm pe UserId din form, dar îl putem popula pentru afișare (dacă view-ul îl are)
-                UserId = CurrentUserId
+
             };
 
-            return View(model);
+            return View(vm);
         }
 
-        // POST: /Entry/Create
+
+        // RouteConfig: "/journals/{journalId}/entries/create" => Entry/Create
+        public ActionResult Create(int journalId)
+        {
+            logger.Info($"[EntryController] Create GET journalId={journalId}");
+
+            try
+            {
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId <= 0) return new HttpUnauthorizedResult();
+
+                var journal = _journalService.GetByIdForUser(journalId, currentUserId);
+                if (journal == null)
+                    return HttpNotFound();
+
+                var model = new CreateEntryViewModel
+                {
+                    JournalId = journalId,
+                    UserId = currentUserId
+                };
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"[EntryController] Error in Create GET (journalId={journalId})");
+                return View("Error");
+            }
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Create(CreateEntryViewModel model)
         {
-            logger.Info($"Attempting to create entry for JournalId={model.JournalId}");
-
-            if (!ModelState.IsValid)
-            {
-                logger.Warn("Entry create failed due to invalid model");
-                return View(model);
-            }
+            logger.Info($"[EntryController] Create POST journalId={model?.JournalId}");
 
             try
             {
-                // Ownership guard: userul curent trebuie să dețină jurnalul
-                var journal = _journalService.GetByIdForUser(model.JournalId, CurrentUserId);
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId <= 0) return new HttpUnauthorizedResult();
+
+                if (!ModelState.IsValid)
+                    return View(model);
+
+                // ownership guard pe jurnal
+                var journal = _journalService.GetByIdForUser(model.JournalId, currentUserId);
                 if (journal == null)
-                {
-                    logger.Warn($"Create Entry blocked: JournalId={model.JournalId} not owned by CurrentUserId={CurrentUserId}");
                     return HttpNotFound();
-                }
 
-                // Anti-tamper: userId se ia din context (CurrentUserId), nu din model
-                var entry = MapToEntityForCreate(model, CurrentUserId);
+                var entry = new Entry
+                {
+                    JournalId = model.JournalId,
+                    Title = model.Title,
+                    Content = model.Content,
+                    Location = model.Location,
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now,
+                    IsDeleted = false
+                    // Latitude/Longitude nu exista in CreateEntryViewModel (sunt comentate) => nu setam
+                };
 
-                _entryService.Create(entry, CurrentUserId);
+                // IMPORTANT: semnatura reala e Create(entry, userId)
+                _entryService.Create(entry, currentUserId);
 
-                logger.Info($"Entry created successfully with ID={entry.EntryId}");
                 return RedirectToAction("Index", new { journalId = model.JournalId });
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Error creating entry for JournalId={model.JournalId}");
+                logger.Error(ex, "[EntryController] Error creating entry");
+                TempData["Error"] = ex.Message;
                 return View("Error");
             }
         }
 
-        // GET: /Entry/Edit/10
         public ActionResult Edit(int id)
         {
-            logger.Info($"Accessing Entry Edit page for EntryId={id}");
+            logger.Info($"[EntryController] Edit GET EntryId={id}");
 
-            var entry = _entryService.GetByIdForUser(id, CurrentUserId);
-            if (entry == null)
+            try
             {
-                logger.Warn($"EntryId={id} not found or not owned by CurrentUserId={CurrentUserId} during Edit GET");
-                return HttpNotFound();
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId <= 0) return new HttpUnauthorizedResult();
+
+                var entry = _entryService.GetByIdForUser(id, currentUserId);
+                if (entry == null)
+                    return HttpNotFound();
+
+                var model = new CreateEntryViewModel
+                {
+                    EntryId = entry.EntryId,
+                    JournalId = entry.JournalId,
+                    UserId = entry.UserId,
+                    Title = entry.Title,
+                    Content = entry.Content,
+                    Location = entry.Location
+                };
+
+                return View(model);
             }
-
-            var model = new CreateEntryViewModel
+            catch (Exception ex)
             {
-                EntryId = entry.EntryId,
-                JournalId = entry.JournalId,
-                UserId = entry.UserId,
-                Title = entry.Title,
-                Content = entry.Content,
-                Location = entry.Location
-            };
-
-            return View(model);
+                logger.Error(ex, $"[EntryController] Error in Edit GET (EntryId={id})");
+                return View("Error");
+            }
         }
 
-        // POST: /Entry/Edit
         [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult Edit(CreateEntryViewModel model)
         {
-            logger.Info($"Attempting to update EntryId={model.EntryId}");
-
-            if (!ModelState.IsValid)
-            {
-                logger.Warn($"Entry update failed - invalid model for EntryId={model.EntryId}");
-                return View(model);
-            }
+            logger.Info($"[EntryController] Edit POST EntryId={model?.EntryId}");
 
             try
             {
-                // Ownership guard: entry trebuie să fie al userului curent
-                var existing = _entryService.GetByIdForUser(model.EntryId, CurrentUserId);
-                if (existing == null)
-                {
-                    logger.Warn($"EntryId={model.EntryId} not found or not owned by CurrentUserId={CurrentUserId} for update");
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId <= 0) return new HttpUnauthorizedResult();
+
+                if (!ModelState.IsValid)
+                    return View(model);
+
+                var entry = _entryService.GetByIdForUser(model.EntryId, currentUserId);
+                if (entry == null)
                     return HttpNotFound();
-                }
 
-                // Anti-tamper: JournalId/UserId nu se iau din model, ci rămân din existing
-                existing.Title = model.Title;
-                existing.Content = model.Content;
-                existing.Location = model.Location;
-                existing.UpdatedAt = DateTime.Now;
+                entry.Title = model.Title;
+                entry.Content = model.Content;
+                entry.Location = model.Location;
+                entry.UpdatedAt = DateTime.Now;
 
-                _entryService.Update(existing);
+                _entryService.Update(entry);
 
-                logger.Info($"EntryId={model.EntryId} updated successfully");
-                return RedirectToAction("Index", new { journalId = existing.JournalId });
+                return RedirectToAction("Index", new { journalId = entry.JournalId });
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Error updating EntryId={model.EntryId}");
+                logger.Error(ex, $"[EntryController] Error updating entry (EntryId={model?.EntryId})");
                 return View("Error");
             }
         }
 
-        // GET: /Entry/Delete/10
         public ActionResult Delete(int id)
         {
-            logger.Info($"Opening Delete confirmation for EntryId={id}");
+            logger.Info($"[EntryController] Delete(GET) entryId={id}");
 
-            var entry = _entryService.GetByIdForUser(id, CurrentUserId);
-            if (entry == null)
+            var currentUserId = GetCurrentUserId();
+            if (currentUserId <= 0) return new HttpUnauthorizedResult();
+
+            // ownership guard
+            var entry = _entryService.GetByIdForUser(id, currentUserId);
+            if (entry == null) return HttpNotFound();
+
+            var sub = _userService.GetSubscription(currentUserId);
+            var photos = _photoService.GetByEntry(id)?.ToList();
+
+            var vm = new TravelJournal.Web.ViewModels.Entries.EntryViewModel
             {
-                logger.Warn($"EntryId={id} not found or not owned by CurrentUserId={CurrentUserId} for deletion");
-                return HttpNotFound();
-            }
+                EntryId = entry.EntryId,
+                Title = entry.Title,
+                Content = entry.Content,
+                Location = entry.Location,
+               
 
-            return View(MapToViewModel(entry));
+                CreatedAt = entry.CreatedAt,
+                UpdatedAt = entry.UpdatedAt,
+                JournalId = entry.JournalId,
+                UserId = entry.UserId,
+
+                Photos = photos,
+                SubscriptionName = sub?.Name ?? "Free"
+            };
+
+            return View(vm);
         }
 
-        // POST: /Entry/Delete/10
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
         public ActionResult DeleteConfirmed(int id)
         {
-            logger.Info($"Attempting to delete EntryId={id}");
+            logger.Info($"[EntryController] DeleteConfirmed EntryId={id}");
 
             try
             {
-                var entry = _entryService.GetByIdForUser(id, CurrentUserId);
-                if (entry == null)
-                {
-                    logger.Warn($"EntryId={id} not found or not owned by CurrentUserId={CurrentUserId} during deletion");
-                    return HttpNotFound();
-                }
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId <= 0) return new HttpUnauthorizedResult();
 
-                var journalId = entry.JournalId;
+                var entry = _entryService.GetByIdForUser(id, currentUserId);
+                if (entry == null)
+                    return HttpNotFound();
 
                 _entryService.Delete(id);
 
-                logger.Info($"EntryId={id} deleted successfully");
-                return RedirectToAction("Index", new { journalId });
+                return RedirectToAction("Index", new { journalId = entry.JournalId });
             }
             catch (Exception ex)
             {
-                logger.Error(ex, $"Error deleting EntryId={id}");
+                logger.Error(ex, $"[EntryController] Error in DeleteConfirmed (EntryId={id})");
                 return View("Error");
             }
         }
 
-        // -----------------------
-        // Mapping helpers
-        // -----------------------
-
-        private static EntryViewModel MapToViewModel(Entry e)
+        // Trash (deleted entries) - daca ai view pentru asta
+        public ActionResult Deleted(int journalId)
         {
-            return new EntryViewModel
+            logger.Info($"[EntryController] Deleted journalId={journalId}");
+
+            try
             {
-                EntryId = e.EntryId,
-                JournalId = e.JournalId,
-                UserId = e.UserId,
-                Title = e.Title,
-                Content = e.Content,
-                Location = e.Location,
-                CreatedAt = e.CreatedAt,
-                UpdatedAt = e.UpdatedAt
-            };
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId <= 0) return new HttpUnauthorizedResult();
+
+                var journal = _journalService.GetByIdForUser(journalId, currentUserId);
+                if (journal == null)
+                    return HttpNotFound();
+
+                var deleted = _entryService.GetDeletedByJournal(journalId)
+                    .Where(e => e.UserId == currentUserId)
+                    .ToList();
+
+                ViewBag.JournalId = journalId;
+                return View(deleted);
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"[EntryController] Error in Deleted (journalId={journalId})");
+                return View("Error");
+            }
         }
 
-        private static Entry MapToEntityForCreate(CreateEntryViewModel model, int userId)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Restore(int id)
         {
-            return new Entry
+            logger.Info($"[EntryController] Restore EntryId={id}");
+
+            try
             {
-                // EntryId va fi setat de DB
-                JournalId = model.JournalId,
-                UserId = userId, // anti-tamper
-                Title = model.Title,
-                Content = model.Content,
-                Location = model.Location,
-                CreatedAt = DateTime.Now,
-                UpdatedAt = DateTime.Now
-            };
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId <= 0) return new HttpUnauthorizedResult();
+
+                // ca sa nu restauram entry al altuia, verificam ownership pe entry (inclusiv daca e deleted)
+                var entry = _entryService.GetById(id);
+                if (entry == null || entry.UserId != currentUserId)
+                    return HttpNotFound();
+
+                _entryService.Restore(id);
+                return RedirectToAction("Index", new { journalId = entry.JournalId });
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"[EntryController] Error in Restore (EntryId={id})");
+                return View("Error");
+            }
         }
+
+        // Upload photo - foloseste exact PhotoStorage + PhotoService.Upload(Photo, userId)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult UploadPhoto(UploadPhotoViewModel vm)
+        {
+            try
+            {
+                var currentUserId = GetCurrentUserId();
+                if (currentUserId <= 0) return new HttpUnauthorizedResult();
+
+                if (!ModelState.IsValid)
+                {
+                    TempData["Error"] = "Please select a valid image file.";
+                    return RedirectToAction("Details", new { id = vm.EntryId });
+                }
+
+                // ownership guard pe entry
+                var entry = _entryService.GetByIdForUser(vm.EntryId, currentUserId);
+                if (entry == null)
+                    return HttpNotFound();
+
+                // 1) salvare fizica
+                var savedRelativePath = PhotoStorage.Save(vm.File);
+
+                // 2) persist in DB
+                var photo = new Photo
+                {
+                    EntryId = vm.EntryId,
+                    FilePath = savedRelativePath
+                };
+
+                _photoService.Upload(photo, currentUserId);
+
+                TempData["Success"] = "Photo uploaded successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = ex.Message;
+            }
+
+            return RedirectToAction("Details", new { id = vm.EntryId });
+        }
+
+       
+
     }
 }

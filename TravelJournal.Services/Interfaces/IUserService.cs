@@ -17,6 +17,9 @@ namespace TravelJournal.Services.Interfaces
         void Delete(int id);
 
         Subscription GetSubscription(int userId);
+
+        User GetByUsername(string username);
+
     }
 }
 

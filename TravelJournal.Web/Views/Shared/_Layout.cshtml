@@ -9,32 +9,87 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@ViewBag.Title - My ASP.NET Application</title>
     @Styles.Render("~/Content/css")
+    <link href="~/Content/site.css?v=@DateTime.Now.Ticks" rel="stylesheet" />
     @Scripts.Render("~/bundles/modernizr")
 </head>
-<body>
+<body class="bg-app d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-dark bg-dark">
         <div class="container">
-            @Html.ActionLink("Application name", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
-            <button type="button" class="navbar-toggler" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" title="Toggle navigation" aria-controls="navbarSupportedContent"
-                    aria-expanded="false" aria-label="Toggle navigation">
+            @Html.ActionLink("Travel Journal", "Index", "Home", new { area = "" }, new { @class = "navbar-brand" })
+
+            <button type="button" class="navbar-toggler"
+                    data-bs-toggle="collapse"
+                    data-bs-target=".navbar-collapse"
+                    title="Toggle navigation"
+                    aria-controls="navbarSupportedContent"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+
             <div class="collapse navbar-collapse d-sm-inline-flex justify-content-between">
+
+                <!-- LEFT MENU -->
                 <ul class="navbar-nav flex-grow-1">
-                    <li>@Html.ActionLink("Home", "Index", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("About", "About", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("Contact", "Contact", "Home", new { area = "" }, new { @class = "nav-link" })</li>
-                    <li>@Html.ActionLink("Dashboard", "Dashboard", "Home")</li>
+                    <li class="nav-item">
+                        @Html.ActionLink("Home", "Index", "Home", null, new { @class = "nav-link" })
+                    </li>
+                    <li class="nav-item">
+                        @Html.ActionLink("About", "About", "Home", null, new { @class = "nav-link" })
+                    </li>
+                    <li class="nav-item">
+                        @Html.ActionLink("Contact", "Contact", "Home", null, new { @class = "nav-link" })
+                    </li>
+
+                    @if (Request.IsAuthenticated)
+                    {
+                        <li class="nav-item">
+                            @Html.ActionLink("Dashboard", "Dashboard", "Home", null, new { @class = "nav-link" })
+                        </li>
+                    }
                 </ul>
+
+                <!-- RIGHT MENU (AUTH) -->
+                <ul class="navbar-nav ms-auto">
+                    @if (Request.IsAuthenticated)
+                    {
+                        <li class="nav-item">
+                            @Html.ActionLink("Subscription Plans", "Plans", "Subscription", null, new { @class = "nav-link fw-bold" })
+                        </li>
+
+                        <li class="nav-item">
+                            @Html.ActionLink("My Plan", "My", "Subscription", null, new { @class = "nav-link" })
+                        </li>
+
+                        <li class="nav-item">
+                            @Html.ActionLink("My Journals", "Index", "Journal", null, new { @class = "nav-link" })
+                        </li>
+
+                        <li class="nav-item">
+                            @Html.ActionLink("Logout", "Logout", "Account", null, new { @class = "nav-link" })
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            @Html.ActionLink("Login", "Login", "Account", null, new { @class = "nav-link" })
+                        </li>
+                    }
+                </ul>
+
             </div>
         </div>
     </nav>
+
     <div class="container body-content">
         @RenderBody()
         <hr />
-        <footer>
-            <p>&copy; @DateTime.Now.Year - My ASP.NET Application</p>
+        <footer class="border-top mt-5">
+            <div class="container py-3 text-muted">
+                &copy; @DateTime.Now.Year - TravelJournal
+            </div>
         </footer>
+
     </div>
 
     @Scripts.Render("~/bundles/jquery")

@@ -54,36 +54,23 @@ namespace TravelJournal.Services.Implementations
 
         public bool CanUploadMedia(int subscriptionId)
         {
-            logger.Info($"[SubscriptionService] Checking upload rights for SubscriptionId={subscriptionId}");
+            var subscription = GetById(subscriptionId);
+            if (subscription == null) return false;
 
-            try
-            {
-                var sub = GetById(subscriptionId);
-                return sub.Name == "Premium" || sub.Name == "Explorer";
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, "[SubscriptionService] Error checking upload rights");
-                throw;
-            }
+            // Explorer + Premium au Media Upload
+            return subscription.Name == "Explorer" || subscription.Name == "Premium";
         }
+
 
         public bool CanExportPdf(int subscriptionId)
         {
-            logger.Info($"[SubscriptionService] Checking PDF export for SubscriptionId={subscriptionId}");
+            var subscription = GetById(subscriptionId);
+            if (subscription == null) return false;
 
-            try
-            {
-                var sub = GetById(subscriptionId);
-                return sub.Name == "Explorer" || sub.Name == "Premium";
-
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, "[SubscriptionService] Error checking PDF export rights");
-                throw;
-            }
+            // DOAR Premium are PDF Export
+            return subscription.Name == "Premium";
         }
+
 
         public bool CanUseMap(int subscriptionId)
         {

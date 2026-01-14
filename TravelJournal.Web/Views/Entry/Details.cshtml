@@ -1,18 +1,159 @@
 ﻿@model TravelJournal.Web.ViewModels.Entries.EntryViewModel
 
-<h2>Entry Details</h2>
+<!-- 4.9: Toolbar + badge plan -->
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h2 class="mb-0">Entry Details</h2>
+    <span class="badge bg-dark">@Model.SubscriptionName</span>
+</div>
+
+<!-- Feedback messages -->
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger mt-3">
+        @TempData["Error"]
+    </div>
+}
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success mt-3">
+        @TempData["Success"]
+    </div>
+}
+
 <hr />
 
-<div class="card p-3">
-    <h4>@Model.Title</h4>
-    <p>@Model.Content</p>
+<!-- Entry content -->
+<div class="card p-3 mb-3">
+    <h4 class="mb-2">@Model.Title</h4>
+    <p class="mb-2">@Model.Content</p>
+
+    @if (!string.IsNullOrWhiteSpace(Model.Location))
+    {
+        <div class="text-muted mb-2">
+            Location: <b>@Model.Location</b>
+        </div>
+    }
 
     <small class="text-muted">
         Created: @Model.CreatedAt.ToString("yyyy-MM-dd HH:mm")
+        @if (Model.UpdatedAt != DateTime.MinValue)
+        {
+            <span class="ms-2">Updated: @Model.UpdatedAt.ToString("yyyy-MM-dd HH:mm")</span>
+        }
     </small>
 </div>
 
-<br />
+<!-- EXPORT PDF -->
+<div class="mb-3">
+    @if (Model.CanExportPdf)
+    {
+        <a class="btn btn-outline-primary"
+           href="@Url.Action("Export", "Export", new { entryId = Model.EntryId })">
+            Export PDF
+        </a>
+    }
+    else
+    {
+        <div class="text-muted">
+            PDF export requires <b>Premium</b>. <a href="/Subscription/Plans">Upgrade</a>
+        </div>
 
-<a href="@Url.Action("Index", "Entry", new { journalId = Model.JournalId })"
-   class="btn btn-secondary">Back</a>
+    }
+</div>
+
+<!-- ===================== -->
+<!-- PHOTOS UI -->
+<!-- ===================== -->
+<div class="card p-3 mb-3">
+    <h4 class="mb-3">
+        Photos
+        <span class="badge bg-secondary ms-2">@Model.SubscriptionName</span>
+    </h4>
+
+    <!-- Upload only if allowed -->
+    @if (Model.CanUploadPhotos)
+    {
+        <form action="@Url.Action("UploadPhoto", "Entry")"
+              method="post"
+              enctype="multipart/form-data"
+              class="row g-2 mb-3 align-items-center">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="EntryId" value="@Model.EntryId" />
+
+            <div class="col-12 col-md-8">
+                <input type="file"
+                       name="File"
+                       class="form-control"
+                       accept=".jpg,.jpeg,.png,.webp"
+                       required />
+            </div>
+
+            <div class="col-12 col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    Upload Photo
+                </button>
+            </div>
+        </form>
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            Your plan (@Model.SubscriptionName) does not allow photo uploads.
+            <a href="/Subscription/Plans">Upgrade plan</a>
+        </div>
+
+    }
+
+    <hr />
+
+    <!-- Preview/list always (safe) -->
+    @{
+        var photos = Model.Photos ?? Enumerable.Empty<dynamic>(); // safe even if null
+        var validPhotos = photos.Where(p => p != null && !string.IsNullOrWhiteSpace((string)p.FilePath)).ToList();
+        var invalidCount = photos.Count() - validPhotos.Count;
+    }
+
+    @if (!validPhotos.Any())
+    {
+        <div class="text-muted">No photos uploaded for this entry.</div>
+
+        if (invalidCount > 0)
+        {
+            <div class="small text-warning mt-2">
+                Note: @invalidCount photo record(s) exist, but their path is missing.
+            </div>
+        }
+    }
+    else
+    {
+        if (invalidCount > 0)
+        {
+            <div class="alert alert-warning py-2 mb-3">
+                Some photo records exist but have missing paths and were skipped (@invalidCount).
+            </div>
+        }
+
+        <div class="row">
+            @foreach (var p in validPhotos)
+            {
+                <div class="col-6 col-md-3 mb-3">
+                    <div class="card h-100">
+                        <img src="@Url.Content(p.FilePath)"
+                             class="card-img-top"
+                             style="object-fit: cover; height: 160px;"
+                             alt="photo" />
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<!-- Back button -->
+<div class="mt-3">
+    <a href="@Url.Action("Index", "Entry", new { journalId = Model.JournalId })"
+       class="btn btn-secondary">
+        Back
+    </a>
+</div>
